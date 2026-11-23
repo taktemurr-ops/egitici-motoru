@@ -552,7 +552,9 @@ class _CodeViewState extends State<_CodeView> with Clock<_CodeView> {
       ),
       Padding(
         padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
           for (var d = 0; d < 4; d++) Padding(padding: const EdgeInsets.all(4), child: BigButton(size: 60, onTap: () => _add(d), child: Icon(_dirIcons[d], size: 32))),
           const SizedBox(width: 10),
           BigButton(
@@ -564,7 +566,8 @@ class _CodeViewState extends State<_CodeView> with Clock<_CodeView> {
           ),
           const SizedBox(width: 6),
           BigButton(size: 68, color: const Color(0xFFCDEBD3), tooltip: et(lang, 'run'), onTap: _run, child: const Icon(Icons.play_arrow_rounded, size: 40)),
-        ]),
+          ]),
+        ),
       ),
     ]);
   }
@@ -858,8 +861,10 @@ class _SwapViewState extends State<_SwapView> with Clock<_SwapView> {
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           SizedBox(width: 90, height: 90, child: TapCanvas(w: 200, h: 200, paint: _drawPic)),
           const SizedBox(width: 12),
-          Text('${et(lang, 'progress')}: ${order.asMap().entries.where((e) => e.key == e.value).length}/${order.length}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Flexible(
+            child: Text('${et(lang, 'progress')}: ${order.asMap().entries.where((e) => e.key == e.value).length}/${order.length}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          ),
         ]),
       ),
       Expanded(child: Padding(padding: const EdgeInsets.all(10), child: TapCanvas(w: 200, h: 200, paint: _paint, onTap: _tap))),
