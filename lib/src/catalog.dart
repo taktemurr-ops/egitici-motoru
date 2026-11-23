@@ -1,11 +1,12 @@
 import 'core.dart';
 import 'kinds/art.dart';
+import 'kinds/life.dart';
 import 'kinds/music.dart';
 import 'kinds/play.dart';
 import 'kinds/quizzes.dart';
 import 'kinds/write.dart';
 
-/// Eğitici ve Çocuk türleri (27).
+/// Eğitici ve Çocuk türleri (32).
 const Map<String, EgiticiKind> kEgiticiKinds = {
   'boyama': BoyamaKind(),
   'sayiyla-boyama': SayiylaBoyamaKind(),
@@ -34,6 +35,11 @@ const Map<String, EgiticiKind> kEgiticiKinds = {
   'hayvanlar': HayvanKind(),
   'ingilizce': IngilizceKind(),
   'labirent-yapboz': LabirentKind(),
+  'duygular': DuyguKind(),
+  'zit-kavramlar': ZitKind(),
+  'geri-donusum': GeriDonusumKind(),
+  'yonler': YonKind(),
+  'saglikli-aliskanliklar': SaglikKind(),
 };
 
 EgiticiRules egiticiRulesFor(String gameId, String kind) => egiticiRules(gameId, kEgiticiKinds[kind]!);

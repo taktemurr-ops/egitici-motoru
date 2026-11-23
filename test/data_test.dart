@@ -37,6 +37,6 @@ void main() {
     }
     expect(kTurkey.length, 81);
     expect(kRegionNames.length, 7);
-    expect(kGameTitles.length, 27);
+    expect(kGameTitles.length, 32);
   });
 }

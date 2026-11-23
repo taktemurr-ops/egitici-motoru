@@ -5,6 +5,7 @@ import 'package:studio_core/app/services/audio.dart';
 import 'package:studio_core/core/rng.dart';
 
 import '../core.dart';
+import '../texts.dart';
 import 'store.dart';
 import 'vis.dart';
 
@@ -16,7 +17,13 @@ class QItem {
 
   /// Soru açılınca çalan ses (ör. hayvan sesi, nota); boşsa yok.
   final String sound;
-  const QItem(this.prompt, this.options, this.answer, {this.sound = ''});
+
+  /// Doğru cevaptan sonra kısa süre gösterilen nazik öneri (metin anahtarı); boşsa yok.
+  final String tip;
+
+  /// Öneri kartındaki görsel.
+  final Vis? tipVis;
+  const QItem(this.prompt, this.options, this.answer, {this.sound = '', this.tip = '', this.tipVis});
 }
 
 /// Soru dizisi bölümü. [race]: matematik yarışı pisti; [grid]: farklı olanı bul.
@@ -52,9 +59,9 @@ bool checkQuiz(EPuzzle p) {
   return (out, order.indexOf(0));
 }
 
-QItem qi(Vis? prompt, Vis right, List<Vis> wrong, SeededRandom r, {String sound = ''}) {
+QItem qi(Vis? prompt, Vis right, List<Vis> wrong, SeededRandom r, {String sound = '', String tip = '', Vis? tipVis}) {
   final (opts, ans) = mix(right, wrong, r);
-  return QItem(prompt, opts, ans, sound: sound);
+  return QItem(prompt, opts, ans, sound: sound, tip: tip, tipVis: tipVis);
 }
 
 /// [n] farklı tamsayı seç (0..[max]-1), [avoid] hariç.
@@ -86,6 +93,7 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
   int extraHide = 0;
   final Set<int> wrong = {};
   int? okAt;
+  bool showTip = false;
   int rival = 0;
   late int skill;
 
@@ -136,11 +144,13 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
     if (i == item.answer) {
       play.sfx(Sfx.clear);
       play.answer(true);
+      final tip = item.tip.isNotEmpty;
       setState(() {
         okAt = i;
         streakWrong = 0;
+        showTip = tip;
       });
-      later(650, _next);
+      later(tip ? 2600 : 650, _next);
     } else {
       play.sfx(Sfx.error);
       play.answer(false);
@@ -154,6 +164,7 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
   }
 
   void _next() {
+    if (ended) return;
     if (idx + 1 >= widget.q.items.length) {
       ended = true;
       final total = widget.q.items.length;
@@ -168,6 +179,7 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
     setState(() {
       idx++;
       okAt = null;
+      showTip = false;
       wrong.clear();
       extraHide = 0;
     });
@@ -187,7 +199,7 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
       final raceH = q.race ? 54.0 : 0.0;
       final avail = h - promptH - raceH - 70;
       final tile = clampD(math.min((w - 24) / cols - 12, avail / rows - 12), 56, 220);
-      return Column(children: [
+      final body = Column(children: [
         Padding(padding: const EdgeInsets.only(top: 4), child: StepDots(done: idx, total: q.items.length)),
         if (q.race) SizedBox(height: raceH, child: _RaceTrack(me: idx + (okAt == null ? 0 : 1), rival: rival, total: q.items.length)),
         if (item.prompt != null)
@@ -227,6 +239,33 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
                     child: VisView(v: item.options[i], lang: play.lang, size: tile * 0.86),
                   ),
               ],
+            ),
+          ),
+        ),
+      ]);
+      if (!showTip) return body;
+      final tv = item.tipVis;
+      final tipW = math.min(w - 32, 460.0);
+      return Stack(children: [
+        body,
+        Positioned(
+          left: (w - tipW) / 2,
+          width: tipW,
+          bottom: 16,
+          child: Material(
+            color: const Color(0xFFFFF7E6),
+            elevation: 3,
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(children: [
+                if (tv != null) VisView(v: tv, lang: play.lang, size: 64),
+                if (tv != null) const SizedBox(width: 12),
+                Expanded(
+                  child: Text(et(play.lang, item.tip),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: KColors.ink, height: 1.25)),
+                ),
+              ]),
             ),
           ),
         ),

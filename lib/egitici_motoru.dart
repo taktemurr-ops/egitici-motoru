@@ -1,4 +1,4 @@
-/// Eğitici ve Çocuk ailesinin ortak motoru: 27 öğretici oyun; bölüm üretimi,
+/// Eğitici ve Çocuk ailesinin ortak motoru: 32 öğretici oyun; bölüm üretimi,
 /// doğrulama, oyun ekranları ve çocuk çerçevesi (çıkartma albümü, ebeveyn
 /// raporu, uyarlanabilir zorluk, günlük süre ve uyku saati).
 library;

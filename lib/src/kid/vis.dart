@@ -51,7 +51,21 @@ enum VT {
   sound, // a = hayvan sesi
   home, // a = yaşam alanı
   word, // a = kelime (ad)
+  face, // a = duygu, b = ten rengi, c = 1 ad
+  emoName, // a = duygu (ad)
+  rel, // a = konum sözcüğü, b = nesne, c = 1 ok ipucu
+  place, // a = konum, b = nesne (kutu ve top resmi)
 }
+
+/// Duygular: yüzler için ten renkleri (çeşitlilik).
+const List<Color> kSkinTones = [Color(0xFFFFDDB8), Color(0xFFF1C27D), Color(0xFFD9A066), Color(0xFFB5764A), Color(0xFF8D5524)];
+
+/// Yönler: kutuya göre yerleştirilen nesneler.
+const List<String> kPlaceMovers = ['⚽', '🐱', '🧸', '🍎', '🐤'];
+const List<int> kPlaceBox = [0xFFC69C6D, 0xFF8EC5E8, 0xFFF4A261, 0xFFB8A1D9, 0xFF7BC67E];
+
+/// Konum ipucu okları: sağ, sol, üst, alt (ön, arka, iç için ok yok).
+const List<String> kRelArrows = ['➡️', '⬅️', '⬆️', '⬇️', '', '', ''];
 
 class Vis {
   final VT t;
@@ -178,6 +192,7 @@ class VisView extends StatelessWidget {
     if (flags & 1 != 0) w = Transform(alignment: Alignment.center, transform: Matrix4.diagonal3Values(-1, 1, 1), child: w);
     if (flags & 2 != 0) w = Transform.rotate(angle: math.pi, child: w);
     if (flags & 4 != 0) w = Opacity(opacity: 0.55, child: w);
+    if (flags & 8 != 0) w = Transform.scale(scale: 0.45, child: w);
     return SizedBox(width: size, height: size, child: Center(child: FittedBox(child: w)));
   }
 
@@ -330,6 +345,40 @@ class VisView extends StatelessWidget {
       }
       case VT.word: {
         return _txt(nm(kWordKeys[v.a % kWordKeys.length], lang), k: 0.2);
+      }
+      case VT.face: {
+        return _paint((c, s) => paintFace(c, s, v.a, v.b), label: v.c == 1 ? nm(kEmotionKeys[v.a % kEmotionKeys.length], lang) : '');
+      }
+      case VT.emoName: {
+        return _txt(nm(kEmotionKeys[v.a % kEmotionKeys.length], lang), k: 0.2);
+      }
+      case VT.rel: {
+        final arrow = v.c == 1 ? kRelArrows[v.a % kRelArrows.length] : '';
+        return SizedBox(
+          width: size,
+          height: size,
+          child: Column(children: [
+            SizedBox(
+              height: size * 0.5,
+              child: FittedBox(
+                child: Text('${kPlaceMovers[v.b % kPlaceMovers.length]} $arrow 📦'.replaceAll('  ', ' '), style: TextStyle(fontSize: size * 0.3)),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: size * 0.04),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(nm(kRelKeys[v.a % kRelKeys.length], lang),
+                      style: TextStyle(fontSize: size * 0.24, fontWeight: FontWeight.w800, color: KColors.ink)),
+                ),
+              ),
+            ),
+          ]),
+        );
+      }
+      case VT.place: {
+        return _paint((c, s) => paintPlace(c, s, v.a, v.b));
       }
     }
   }
@@ -932,6 +981,167 @@ void paintDots(Canvas c, double s, int rows, int cols) {
     for (var x = 0; x < cols; x++) {
       c.drawCircle(Offset(ox + (x + 0.5) * cell, oy + (y + 0.5) * cell), cell * 0.34, fill(KColors.tiles[y % KColors.tiles.length].withValues(alpha: 1)));
       c.drawCircle(Offset(ox + (x + 0.5) * cell, oy + (y + 0.5) * cell), cell * 0.34, stroke(Colors.black26, 1));
+    }
+  }
+}
+
+
+/// Duygu yüzü: 0 mutlu, 1 üzgün, 2 kızgın, 3 korkmuş, 4 şaşkın, 5 sakin.
+void paintFace(Canvas c, double s, int e, int tone) {
+  final ctr = Offset(s / 2, s / 2);
+  final r = s * 0.4;
+  c.drawCircle(ctr, r, fill(kSkinTones[tone % kSkinTones.length]));
+  c.drawCircle(ctr, r, stroke(const Color(0x55000000), s * 0.015));
+  final ink = stroke(KColors.ink, s * 0.035);
+  final dot = fill(KColors.ink);
+  final ex = s * 0.15, ey = s * 0.42, er = s * 0.035;
+  final le = Offset(s / 2 - ex, ey), re = Offset(s / 2 + ex, ey);
+  // yanaklar
+  if (e == 0 || e == 5) {
+    c.drawCircle(Offset(s / 2 - s * 0.24, s * 0.56), s * 0.045, fill(const Color(0x40E07A5F)));
+    c.drawCircle(Offset(s / 2 + s * 0.24, s * 0.56), s * 0.045, fill(const Color(0x40E07A5F)));
+  }
+  if (e == 2) {
+    c.drawCircle(Offset(s / 2 - s * 0.24, s * 0.56), s * 0.06, fill(const Color(0x55E63946)));
+    c.drawCircle(Offset(s / 2 + s * 0.24, s * 0.56), s * 0.06, fill(const Color(0x55E63946)));
+  }
+  // gözler
+  switch (e) {
+    case 3:
+    case 4: {
+      for (final o in [le, re]) {
+        c.drawCircle(o, s * 0.06, fill(Colors.white));
+        c.drawCircle(o, s * 0.06, stroke(KColors.ink, s * 0.02));
+        c.drawCircle(o + Offset(0, e == 3 ? s * 0.012 : 0), s * 0.026, dot);
+      }
+    }
+    case 5: {
+      for (final o in [le, re]) {
+        c.drawArc(Rect.fromCenter(center: o, width: s * 0.1, height: s * 0.06), 0, math.pi, false, ink);
+      }
+    }
+    default: {
+      c.drawCircle(le, er, dot);
+      c.drawCircle(re, er, dot);
+    }
+  }
+  // kaşlar
+  final by = ey - s * 0.1;
+  switch (e) {
+    case 1: {
+      c.drawLine(Offset(le.dx - s * 0.06, by + s * 0.02), Offset(le.dx + s * 0.05, by - s * 0.03), ink);
+      c.drawLine(Offset(re.dx + s * 0.06, by + s * 0.02), Offset(re.dx - s * 0.05, by - s * 0.03), ink);
+    }
+    case 2: {
+      c.drawLine(Offset(le.dx - s * 0.06, by - s * 0.03), Offset(le.dx + s * 0.06, by + s * 0.03), ink);
+      c.drawLine(Offset(re.dx + s * 0.06, by - s * 0.03), Offset(re.dx - s * 0.06, by + s * 0.03), ink);
+    }
+    case 3:
+    case 4: {
+      c.drawArc(Rect.fromCenter(center: Offset(le.dx, by - s * 0.02), width: s * 0.12, height: s * 0.06), math.pi, math.pi, false, ink);
+      c.drawArc(Rect.fromCenter(center: Offset(re.dx, by - s * 0.02), width: s * 0.12, height: s * 0.06), math.pi, math.pi, false, ink);
+    }
+    default: {}
+  }
+  // ağız
+  final my = s * 0.64;
+  switch (e) {
+    case 0: {
+      final m = Path()
+        ..moveTo(s / 2 - s * 0.14, my - s * 0.02)
+        ..quadraticBezierTo(s / 2, my + s * 0.16, s / 2 + s * 0.14, my - s * 0.02)
+        ..close();
+      c.drawPath(m, fill(const Color(0xFF9C2F2F)));
+      c.drawPath(m, stroke(KColors.ink, s * 0.025));
+    }
+    case 1: {
+      c.drawArc(Rect.fromCenter(center: Offset(s / 2, my + s * 0.06), width: s * 0.2, height: s * 0.1), math.pi, math.pi, false, ink);
+      final tear = Path()
+        ..moveTo(re.dx + s * 0.02, ey + s * 0.05)
+        ..quadraticBezierTo(re.dx + s * 0.06, ey + s * 0.12, re.dx + s * 0.02, ey + s * 0.14)
+        ..quadraticBezierTo(re.dx - s * 0.02, ey + s * 0.12, re.dx + s * 0.02, ey + s * 0.05)
+        ..close();
+      c.drawPath(tear, fill(const Color(0xFF8EC5E8)));
+    }
+    case 2: {
+      c.drawLine(Offset(s / 2 - s * 0.1, my + s * 0.03), Offset(s / 2 + s * 0.1, my + s * 0.03), ink);
+    }
+    case 3: {
+      final w = Path()..moveTo(s / 2 - s * 0.12, my + s * 0.03);
+      for (var i = 0; i < 4; i++) {
+        w.relativeQuadraticBezierTo(s * 0.03, i.isEven ? -s * 0.04 : s * 0.04, s * 0.06, 0);
+      }
+      c.drawPath(w, ink);
+    }
+    case 4: {
+      c.drawOval(Rect.fromCenter(center: Offset(s / 2, my + s * 0.03), width: s * 0.1, height: s * 0.13), fill(const Color(0xFF9C2F2F)));
+    }
+    default: {
+      c.drawArc(Rect.fromCenter(center: Offset(s / 2, my - s * 0.02), width: s * 0.16, height: s * 0.08), 0, math.pi, false, ink);
+    }
+  }
+}
+
+/// Kutu (ayaklı sandık) ve nesne: konum 0 sağ, 1 sol, 2 üst, 3 alt, 4 ön, 5 arka, 6 iç.
+void paintPlace(Canvas c, double s, int rel, int obj) {
+  final ground = s * 0.86;
+  c.drawLine(Offset(s * 0.04, ground), Offset(s * 0.96, ground), stroke(KColors.line, s * 0.02));
+  final box = Rect.fromLTWH(s * 0.3, s * 0.4, s * 0.4, s * 0.24);
+  final col = Color(kPlaceBox[obj % kPlaceBox.length]);
+  final mover = kPlaceMovers[obj % kPlaceMovers.length];
+  void drawMover(Offset at, double k) => drawLabel(c, mover, at, s * k, KColors.ink);
+  void drawBox() {
+    // ayaklar
+    final leg = stroke(const Color(0xFF6B4F3A), s * 0.035);
+    c.drawLine(Offset(box.left + s * 0.04, box.bottom), Offset(box.left + s * 0.04, ground), leg);
+    c.drawLine(Offset(box.right - s * 0.04, box.bottom), Offset(box.right - s * 0.04, ground), leg);
+    final rr = RRect.fromRectAndRadius(box, Radius.circular(s * 0.02));
+    c.drawRRect(rr, fill(col));
+    c.drawRRect(rr, stroke(const Color(0x66000000), s * 0.012));
+    for (var i = 1; i < 3; i++) {
+      final y = box.top + box.height * i / 3;
+      c.drawLine(Offset(box.left, y), Offset(box.right, y), stroke(const Color(0x33000000), s * 0.008));
+    }
+  }
+
+  switch (rel) {
+    case 0: {
+      drawBox();
+      drawMover(Offset(s * 0.86, ground - s * 0.08), 0.15);
+    }
+    case 1: {
+      drawBox();
+      drawMover(Offset(s * 0.14, ground - s * 0.08), 0.15);
+    }
+    case 2: {
+      drawBox();
+      drawMover(Offset(s * 0.5, box.top - s * 0.08), 0.15);
+    }
+    case 3: {
+      drawBox();
+      drawMover(Offset(s * 0.5, ground - s * 0.08), 0.12);
+    }
+    case 4: {
+      drawBox();
+      drawMover(Offset(s * 0.5, box.bottom + s * 0.02), 0.2);
+    }
+    case 5: {
+      drawMover(Offset(s * 0.62, box.top - s * 0.02), 0.11);
+      drawBox();
+    }
+    default: {
+      // içinde: kutu üstten açık, nesne ağızdan görünür
+      final rr = RRect.fromRectAndRadius(box, Radius.circular(s * 0.02));
+      c.drawOval(Rect.fromLTWH(box.left, box.top - s * 0.04, box.width, s * 0.08), fill(const Color(0xFF4A3A2C)));
+      drawMover(Offset(s * 0.5, box.top + s * 0.01), 0.13);
+      final leg = stroke(const Color(0xFF6B4F3A), s * 0.035);
+      c.drawLine(Offset(box.left + s * 0.04, box.bottom), Offset(box.left + s * 0.04, ground), leg);
+      c.drawLine(Offset(box.right - s * 0.04, box.bottom), Offset(box.right - s * 0.04, ground), leg);
+      c.save();
+      c.clipRect(Rect.fromLTWH(box.left - 2, box.top + s * 0.035, box.width + 4, box.height));
+      c.drawRRect(rr, fill(col));
+      c.restore();
+      c.drawRRect(rr, stroke(const Color(0x66000000), s * 0.012));
     }
   }
 }
