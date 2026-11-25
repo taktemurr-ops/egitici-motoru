@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../core.dart';
 import '../data/alpha.dart';
+import '../data/capitals.dart';
 import '../data/flags.dart';
 import '../data/names.dart';
 import '../data/words.dart';
@@ -158,6 +159,8 @@ String moneyText(int v, String lang) => '${numL(v, lang)} ${currency(lang)}';
 String countryName(String code, String lang) => pickL(kCountryNames[code] ?? [code], lang);
 
 String capitalOf(String code, String lang) {
+  final names = kCapitalNames[code];
+  if (names != null) return pickL(names, lang);
   for (final f in kFlags) {
     if (f[0] == code) return lang == 'tr' ? f[2] : f[1];
   }
