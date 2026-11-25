@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../core.dart';
 import '../data/alpha.dart';
 import '../data/capitals.dart';
+import '../data/discover.dart';
+import '../data/discover_names.dart';
 import '../data/flags.dart';
 import '../data/names.dart';
 import '../data/words.dart';
@@ -56,6 +58,10 @@ enum VT {
   emoName, // a = duygu (ad)
   rel, // a = konum sözcüğü, b = nesne, c = 1 ok ipucu
   place, // a = konum, b = nesne (kutu ve top resmi)
+  pic, // s = ad anahtarı (resim kPicEmoji'den), b = ten rengi (meslek), c = 1 ad
+  picName, // s = ad anahtarı (yalnız ad)
+  dino, // a = dinozor, c = 1 ad
+  grow, // a = 0 ağaçta, 1 toprak altında, 2 bitkide
 }
 
 /// Duygular: yüzler için ten renkleri (çeşitlilik).
@@ -97,7 +103,7 @@ bool bicameral(String lang) {
   return false;
 }
 
-String nm(String key, String lang) => pickL(kNames[key] ?? const [''], lang);
+String nm(String key, String lang) => pickL(kNames[key] ?? kDiscoverNames[key] ?? const [''], lang);
 
 String numL(int n, String lang) => localNum(n, lang, kDigits);
 
@@ -382,6 +388,34 @@ class VisView extends StatelessWidget {
       }
       case VT.place: {
         return _paint((c, s) => paintPlace(c, s, v.a, v.b));
+      }
+      case VT.pic: {
+        final raw = kPicEmoji[v.s] ?? '?';
+        final e = v.s.startsWith('j.') ? toned(raw, v.b) : raw;
+        if (v.c != 1) return _emoji(e);
+        return SizedBox(
+          width: size,
+          height: size,
+          child: Column(children: [
+            Expanded(child: FittedBox(child: Text(e, style: TextStyle(fontSize: size * 0.5)))),
+            SizedBox(
+              height: size * 0.22,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: size * 0.04),
+                child: FittedBox(child: Text(nm(v.s, lang), style: const TextStyle(fontWeight: FontWeight.w700, color: KColors.ink))),
+              ),
+            ),
+          ]),
+        );
+      }
+      case VT.picName: {
+        return _txt(nm(v.s, lang), k: 0.2);
+      }
+      case VT.dino: {
+        return _paint((c, s) => paintDino(c, s, v.a % kDinoKeys.length), label: v.c == 1 ? nm(kDinoKeys[v.a % kDinoKeys.length], lang) : '');
+      }
+      case VT.grow: {
+        return _paint((c, s) => paintGrow(c, s, v.a % 3));
       }
     }
   }
@@ -1147,4 +1181,198 @@ void paintPlace(Canvas c, double s, int rel, int obj) {
       c.drawRRect(rr, stroke(const Color(0x66000000), s * 0.012));
     }
   }
+}
+
+// ---------------------------------------------------------------- dinozorlar
+
+Color _shade(Color c, double k) => Color.lerp(c, const Color(0xFF000000), k)!;
+
+/// Basit, sevimli dinozor çizimleri (100 birimlik kare, sağa bakar).
+void paintDino(Canvas c, double s, int i) {
+  final col = Color(kDinoColors[i]);
+  final dark = _shade(col, 0.28);
+  final body = fill(col);
+  final shade = fill(dark);
+  c.save();
+  c.scale(s / 100, s / 100);
+  void ell(double x, double y, double rx, double ry, Paint p) => c.drawOval(Rect.fromCenter(center: Offset(x, y), width: rx * 2, height: ry * 2), p);
+  void leg(double x, double top, double bottom, double w, Paint p) =>
+      c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTRB(x - w / 2, top, x + w / 2, bottom), Radius.circular(w / 2)), p);
+  void tail(Offset a, Offset b, Offset tip, Paint p) => c.drawPath(Path()
+    ..moveTo(a.dx, a.dy)
+    ..quadraticBezierTo((a.dx + tip.dx) / 2, (a.dy + tip.dy) / 2 - 4, tip.dx, tip.dy)
+    ..quadraticBezierTo((b.dx + tip.dx) / 2, (b.dy + tip.dy) / 2 + 2, b.dx, b.dy)
+    ..close(), p);
+  void eye(double x, double y) {
+    c.drawCircle(Offset(x, y), 2.6, fill(Colors.white));
+    c.drawCircle(Offset(x + 0.6, y), 1.4, fill(KColors.ink));
+  }
+
+  final ground = fill(const Color(0x22000000));
+  if (kDinoHome[i] == 0) ell(50, 88, 38, 4, ground);
+  switch (i) {
+    case 0: // tiranozor
+      tail(const Offset(30, 46), const Offset(30, 60), const Offset(4, 44), body);
+      leg(38, 56, 86, 9, shade);
+      leg(52, 56, 86, 9, body);
+      ell(44, 52, 20, 13, body);
+      c.drawPath(Path()..addPolygon(const [Offset(52, 44), Offset(62, 24), Offset(70, 30), Offset(62, 50)], true), body);
+      c.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTRB(58, 16, 90, 34), const Radius.circular(7)), body);
+      c.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTRB(64, 31, 88, 38), const Radius.circular(4)), shade);
+      for (var x = 66.0; x < 87; x += 5) {
+        c.drawPath(Path()..addPolygon([Offset(x, 31), Offset(x + 2, 34), Offset(x + 4, 31)], true), fill(Colors.white));
+      }
+      c.drawLine(const Offset(60, 46), const Offset(67, 52), stroke(dark, 3));
+      eye(70, 22);
+    case 1: // triseratops
+      tail(const Offset(24, 50), const Offset(26, 62), const Offset(4, 64), body);
+      for (final x in [30.0, 42.0, 56.0, 66.0]) {
+        leg(x, 58, 86, 9, x == 42 || x == 66 ? shade : body);
+      }
+      ell(46, 56, 25, 15, body);
+      c.drawCircle(const Offset(68, 46), 15, shade);
+      ell(76, 54, 12, 9, body);
+      c.drawPath(Path()..addPolygon(const [Offset(72, 44), Offset(94, 32), Offset(76, 48)], true), fill(const Color(0xFFF3E9DC)));
+      c.drawPath(Path()..addPolygon(const [Offset(82, 50), Offset(96, 44), Offset(86, 55)], true), fill(const Color(0xFFF3E9DC)));
+      eye(78, 50);
+    case 2: // stegozor
+      tail(const Offset(26, 52), const Offset(26, 64), const Offset(4, 66), body);
+      for (final p in const [Offset(6, 64), Offset(10, 60)]) {
+        c.drawLine(p, p + const Offset(-3, -8), stroke(const Color(0xFFF3E9DC), 2.5));
+      }
+      for (var k = 0; k < 6; k++) {
+        final x = 26 + k * 9.0;
+        final y = 44.0 - (k == 2 || k == 3 ? 6 : 0) + (k == 0 || k == 5 ? 6 : 0);
+        c.drawPath(Path()..addPolygon([Offset(x - 5, y + 8), Offset(x, y - 8), Offset(x + 5, y + 8)], true), fill(const Color(0xFFE07A5F)));
+      }
+      for (final x in [30.0, 40.0, 58.0, 66.0]) {
+        leg(x, 60, 86, 8, x == 40 || x == 66 ? shade : body);
+      }
+      ell(48, 58, 26, 14, body);
+      ell(80, 66, 9, 6, body);
+      eye(83, 64);
+    case 3: // brakiyozor
+      tail(const Offset(24, 60), const Offset(26, 70), const Offset(4, 76), body);
+      for (final x in [30.0, 38.0, 52.0, 60.0]) {
+        leg(x, 64, 88, 9, x == 38 || x == 60 ? shade : body);
+      }
+      ell(42, 62, 22, 13, body);
+      c.drawLine(const Offset(56, 56), const Offset(76, 14), stroke(col, 10));
+      ell(80, 12, 9, 6, body);
+      eye(82, 10);
+    case 4: // ankilozor
+      tail(const Offset(24, 60), const Offset(24, 68), const Offset(10, 64), body);
+      c.drawCircle(const Offset(8, 64), 6, shade);
+      for (final x in [30.0, 40.0, 58.0, 68.0]) {
+        leg(x, 64, 86, 9, x == 40 || x == 68 ? shade : body);
+      }
+      ell(48, 62, 28, 13, body);
+      for (var k = 0; k < 7; k++) {
+        c.drawCircle(Offset(26 + k * 7.5, 54.0 + (k.isEven ? 0 : 3)), 2.6, fill(const Color(0xFFF3E9DC)));
+      }
+      ell(80, 66, 9, 7, body);
+      eye(83, 64);
+    case 5: // velosiraptor (küçük)
+      tail(const Offset(40, 50), const Offset(40, 56), const Offset(8, 46), body);
+      leg(46, 56, 84, 5, shade);
+      leg(54, 56, 84, 5, body);
+      ell(50, 53, 13, 8, body);
+      c.drawLine(const Offset(58, 48), const Offset(66, 38), stroke(col, 6));
+      ell(72, 36, 10, 5, body);
+      c.drawLine(const Offset(58, 56), const Offset(64, 62), stroke(dark, 2));
+      c.drawLine(const Offset(52, 84), const Offset(58, 80), stroke(dark, 2));
+      eye(74, 34);
+    case 6: // parazorolof
+      tail(const Offset(28, 50), const Offset(28, 62), const Offset(4, 56), body);
+      leg(38, 58, 86, 9, shade);
+      leg(52, 58, 86, 9, body);
+      ell(44, 56, 22, 13, body);
+      c.drawLine(const Offset(60, 50), const Offset(70, 38), stroke(col, 9));
+      ell(76, 38, 10, 6, body);
+      c.drawLine(const Offset(72, 34), const Offset(52, 20), stroke(const Color(0xFFE07A5F), 5));
+      eye(78, 36);
+    case 7: // spinozor
+      c.drawArc(Rect.fromCenter(center: const Offset(44, 50), width: 40, height: 40), 3.14159, 3.14159, true, fill(const Color(0xFFE07A5F)));
+      for (var k = 0; k < 5; k++) {
+        final x = 30 + k * 7.0;
+        c.drawLine(Offset(x, 50), Offset(x + (x - 44) * 0.2, 34 + (x - 44).abs() * 0.4), stroke(const Color(0xFFB85C46), 1.5));
+      }
+      tail(const Offset(26, 52), const Offset(26, 62), const Offset(2, 58), body);
+      leg(38, 58, 86, 9, shade);
+      leg(52, 58, 86, 9, body);
+      ell(44, 57, 22, 11, body);
+      c.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTRB(60, 44, 94, 54), const Radius.circular(5)), body);
+      eye(68, 46);
+    case 8: // pteranodon (uçan sürüngen)
+      c.drawPath(Path()..addPolygon(const [Offset(50, 46), Offset(4, 30), Offset(30, 56)], true), shade);
+      c.drawPath(Path()..addPolygon(const [Offset(50, 46), Offset(96, 30), Offset(70, 56)], true), body);
+      ell(50, 50, 9, 8, body);
+      c.drawPath(Path()..addPolygon(const [Offset(54, 42), Offset(80, 44), Offset(56, 48)], true), fill(const Color(0xFFF6C85F)));
+      c.drawPath(Path()..addPolygon(const [Offset(50, 42), Offset(36, 32), Offset(52, 38)], true), fill(const Color(0xFFE07A5F)));
+      eye(54, 42);
+    default: // pleziyozor (deniz sürüngeni)
+      for (var k = 0; k < 3; k++) {
+        final y = 80.0 + k * 6;
+        final p = Path()..moveTo(6, y);
+        for (var x = 6.0; x < 94; x += 12) {
+          p.quadraticBezierTo(x + 3, y - 4, x + 6, y);
+          p.quadraticBezierTo(x + 9, y + 4, x + 12, y);
+        }
+        c.drawPath(p, stroke(const Color(0xFF8EC5E8), 2));
+      }
+      ell(30, 72, 9, 4, shade);
+      ell(56, 72, 9, 4, shade);
+      tail(const Offset(28, 60), const Offset(28, 68), const Offset(10, 66), body);
+      ell(44, 62, 20, 11, body);
+      final neck = Path()
+        ..moveTo(58, 56)
+        ..quadraticBezierTo(76, 46, 78, 26);
+      c.drawPath(neck, stroke(col, 8));
+      ell(82, 24, 8, 5, body);
+      eye(84, 22);
+  }
+  c.restore();
+}
+
+/// Nerede yetişir: 0 ağaçta, 1 toprağın altında, 2 bitkide.
+void paintGrow(Canvas c, double s, int g) {
+  c.save();
+  c.scale(s / 100, s / 100);
+  final soil = fill(const Color(0xFF8D6748));
+  final leaf = fill(const Color(0xFF5BB56A));
+  switch (g) {
+    case 0:
+      c.drawRect(const Rect.fromLTWH(0, 86, 100, 14), fill(const Color(0xFF8CCB7E)));
+      c.drawRect(const Rect.fromLTWH(44, 50, 12, 38), soil);
+      c.drawCircle(const Offset(50, 36), 28, leaf);
+      c.drawCircle(const Offset(34, 46), 16, leaf);
+      c.drawCircle(const Offset(66, 46), 16, leaf);
+      for (final o in const [Offset(38, 30), Offset(60, 26), Offset(52, 46), Offset(30, 50), Offset(70, 50)]) {
+        c.drawCircle(o, 5, fill(const Color(0xFFE63946)));
+      }
+    case 1:
+      c.drawRect(const Rect.fromLTWH(0, 44, 100, 56), soil);
+      for (var k = 0; k < 8; k++) {
+        c.drawCircle(Offset(8 + k * 12.0, 52.0 + (k % 3) * 14), 1.6, fill(const Color(0xFF6B4F37)));
+      }
+      for (final a in const [-0.5, 0.0, 0.5]) {
+        c.drawPath(Path()
+          ..moveTo(50, 46)
+          ..quadraticBezierTo(50 + a * 30, 30, 50 + a * 36, 12)
+          ..quadraticBezierTo(50 + a * 10, 28, 50, 46), leaf);
+      }
+      c.drawPath(Path()..addPolygon(const [Offset(38, 48), Offset(62, 48), Offset(50, 92)], true), fill(const Color(0xFFF4A261)));
+      c.drawLine(const Offset(0, 44), const Offset(100, 44), stroke(const Color(0xFF6B4F37), 2));
+    default:
+      c.drawRect(const Rect.fromLTWH(0, 82, 100, 18), soil);
+      for (final x in const [30.0, 50.0, 70.0]) {
+        c.drawLine(Offset(x, 82), Offset(x + 2, 40), stroke(const Color(0xFF4C956C), 3));
+        c.drawOval(Rect.fromCenter(center: Offset(x - 7, 58), width: 14, height: 8), leaf);
+        c.drawOval(Rect.fromCenter(center: Offset(x + 9, 50), width: 14, height: 8), leaf);
+      }
+      for (final o in const [Offset(36, 66), Offset(56, 60), Offset(76, 68), Offset(46, 44)]) {
+        c.drawCircle(o, 5, fill(const Color(0xFFE63946)));
+      }
+  }
+  c.restore();
 }

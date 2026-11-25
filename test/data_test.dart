@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:egitici_motoru/src/data/alpha.dart';
+import 'package:egitici_motoru/src/data/discover.dart';
+import 'package:egitici_motoru/src/data/discover_names.dart';
 import 'package:egitici_motoru/src/data/flags.dart';
 import 'package:egitici_motoru/src/data/names.dart';
 import 'package:egitici_motoru/src/data/titles.dart';
@@ -37,6 +39,31 @@ void main() {
     }
     expect(kTurkey.length, 81);
     expect(kRegionNames.length, 7);
-    expect(kGameTitles.length, 32);
+    expect(kGameTitles.length, 36);
+  });
+
+  test('meslek, vücut, dinozor, meyve-sebze verisi 33 dilde', () {
+    for (final v in kDiscoverNames.values) {
+      expect(v.length, 33);
+    }
+    for (final v in kDiscoverTexts.values) {
+      expect(v.length, 33);
+    }
+    for (final k in kPicEmoji.keys) {
+      expect(kNames.containsKey(k) || kDiscoverNames.containsKey(k), isTrue, reason: k);
+    }
+    for (final k in kDinoKeys) {
+      expect(kDiscoverNames.containsKey(k), isTrue, reason: k);
+    }
+    expect(kDinoDiet.length, kDinoKeys.length);
+    expect(kDinoHome.length, kDinoKeys.length);
+    expect(kDinoSize.length, kDinoKeys.length);
+    // her alet ve yer tek bir mesleğe aittir
+    final seen = <String>{};
+    for (final j in kJobs) {
+      for (final e in [...j.tools, ...j.places]) {
+        expect(seen.add(e), isTrue, reason: e);
+      }
+    }
   });
 }

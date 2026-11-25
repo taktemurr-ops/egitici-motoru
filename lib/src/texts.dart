@@ -1,5 +1,7 @@
 import 'package:studio_core/core/strings.dart';
 
+import 'data/discover_names.dart';
+
 // Bu dosya proto/egitici/gen_data.py ile üretilir; elle düzenlemeyin.
 /// egitici-motoru kısa metinleri (33 dil).
 const Map<String, List<String>> kEgiticiTexts = {
@@ -41,4 +43,4 @@ const Map<String, List<String>> kEgiticiTexts = {
   'tip.calm': ['Bu güzel anın tadını çıkar.', 'Enjoy this lovely moment.', 'Genieße diesen schönen Moment.', 'Disfruta de este momento bonito.', 'Profite de ce joli moment.', 'استمتع بهذه اللحظة الجميلة.', 'از این لحظهٔ خوب لذت ببر.', 'תיהנו מהרגע היפה הזה.', 'اس خوبصورت لمحے سے لطف اٹھائیں۔', 'Наслаждайся этой чудесной минутой.', 'Насолоджуйся цією гарною миттю.', 'Ciesz się tą piękną chwilą.', 'Užij si tuhle krásnou chvíli.', 'Bucură-te de acest moment frumos.', 'Élvezd ezt a szép pillanatot.', 'Απόλαυσε αυτή την όμορφη στιγμή.', 'Goditi questo bel momento.', 'Aproveite este momento gostoso.', 'Geniet van dit fijne moment.', 'Njut av den här fina stunden.', 'Nyd dette dejlige øjeblik.', 'Nyt dette fine øyeblikket.', 'Nauti tästä ihanasta hetkestä.', 'このすてきなじかんをたのしもう。', '이 멋진 순간을 즐겨요.', '享受这美好的时刻。', 'इस प्यारे पल का आनंद लो।', 'এই সুন্দর মুহূর্তটা উপভোগ করো।', 'Nikmati momen indah ini.', 'Nikmati detik indah ini.', 'มีความสุขกับช่วงเวลาดี ๆ นี้นะ', 'Hãy tận hưởng khoảnh khắc đẹp này.', 'Namnamin ang magandang sandaling ito.'],
 };
 
-String et(String lang, String key) => Strings.pick(kEgiticiTexts[key] ?? const [''], lang);
+String et(String lang, String key) => Strings.pick(kEgiticiTexts[key] ?? kDiscoverTexts[key] ?? const [''], lang);
