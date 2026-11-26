@@ -121,10 +121,14 @@ class _ToyViewState extends State<_ToyView> with Clock<_ToyView> {
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(color: KColors.paper, borderRadius: BorderRadius.circular(18)),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('${et(lang, 'oeTask')}: ', style: const TextStyle(color: KColors.ink, fontWeight: FontWeight.w800, fontSize: 16)),
-          Text(cur == null ? '🎉' : '${sc.$4[cur.$1]}  ➜  ${sc.$3[cur.$2]}', style: const TextStyle(fontSize: 30, color: KColors.ink)),
-        ]),
+        // Dar ekranda / uzun dilde taşmasın: satır sığacak kadar küçülür.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text('${et(lang, 'oeTask')}: ', style: const TextStyle(color: KColors.ink, fontWeight: FontWeight.w800, fontSize: 16)),
+            Text(cur == null ? '🎉' : '${sc.$4[cur.$1]}  ➜  ${sc.$3[cur.$2]}', style: const TextStyle(fontSize: 30, color: KColors.ink)),
+          ]),
+        ),
       ),
       Text(et(lang, sc.$1), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
       Expanded(
