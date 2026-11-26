@@ -8,6 +8,7 @@ import '../core.dart';
 import '../data/alpha.dart';
 import '../data/art.dart';
 import '../data/turkey.dart';
+import '../studio_chrome.dart';
 import '../texts.dart';
 
 // ---------------------------------------------------------------- Türkiye haritası yapbozu
@@ -543,8 +544,8 @@ class _CodeViewState extends State<_CodeView> with Clock<_CodeView> {
                   border: Border.all(color: Colors.black12),
                 ),
                 child: Stack(alignment: Alignment.center, children: [
-                  Icon(_dirIcons[prog[i].$1], size: 34),
-                  if (prog[i].$2 > 1) Positioned(right: 4, bottom: 2, child: Text('×${prog[i].$2}', style: const TextStyle(fontWeight: FontWeight.w800))),
+                  Icon(_dirIcons[prog[i].$1], size: 34, color: KColors.ink),
+                  if (prog[i].$2 > 1) Positioned(right: 4, bottom: 2, child: Text('×${prog[i].$2}', style: const TextStyle(fontWeight: FontWeight.w800, color: KColors.ink))),
                 ]),
               ),
             ),
@@ -559,13 +560,12 @@ class _CodeViewState extends State<_CodeView> with Clock<_CodeView> {
           const SizedBox(width: 10),
           BigButton(
             size: 60,
-            color: KColors.soft,
             tooltip: et(lang, 'clear'),
             onTap: running ? null : () => setState(() => prog.clear()),
             child: const Icon(Icons.backspace_outlined),
           ),
           const SizedBox(width: 6),
-          BigButton(size: 68, color: const Color(0xFFCDEBD3), tooltip: et(lang, 'run'), onTap: _run, child: const Icon(Icons.play_arrow_rounded, size: 40)),
+          BigButton(size: 68, color: StudioLook.good, tooltip: et(lang, 'run'), onTap: _run, child: const Icon(Icons.play_arrow_rounded, size: 40)),
           ]),
         ),
       ),

@@ -339,7 +339,7 @@ class VisView extends StatelessWidget {
           height: size,
           child: Column(children: [
             Expanded(child: FittedBox(child: Text(kAnimalEmoji[i], style: TextStyle(fontSize: size * 0.5)))),
-            SizedBox(height: size * 0.22, child: FittedBox(child: Text(nm(kAnimalKeys[i], lang), style: const TextStyle(fontWeight: FontWeight.w700)))),
+            SizedBox(height: size * 0.22, child: FittedBox(child: Text(nm(kAnimalKeys[i], lang), style: const TextStyle(fontWeight: FontWeight.w700, color: KColors.ink)))),
           ]),
         );
       }

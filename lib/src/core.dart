@@ -13,6 +13,7 @@ import 'package:studio_core/core/strings.dart';
 
 import 'kid/frame.dart';
 import 'kid/store.dart';
+import 'studio_chrome.dart';
 
 /// Eğitici oyunlardan birinin kurulmuş bölümü.
 abstract class EPuzzle {
@@ -164,7 +165,9 @@ class _EgiticiStageState extends State<EgiticiStage> {
 
   @override
   Widget build(BuildContext context) {
-    return KidFrame(play: play, hooks: hooks, child: widget.rules.kind.build(play));
+    // Çerçeve (albüm, ebeveyn alanı, kutlama) ve türün düğmeleri onaylı
+    // koyu tasarımda; resim kartları kendi yumuşak renklerini korur.
+    return StudioChrome(child: KidFrame(play: play, hooks: hooks, child: widget.rules.kind.build(play)));
   }
 }
 
@@ -355,25 +358,51 @@ String localNum(int n, String lang, Map<String, String> digits) {
   return b.toString();
 }
 
-/// Büyük, yuvarlak, kolay dokunulan düğme.
+/// Büyük, yuvarlak, kolay dokunulan düğme (onaylı tasarımın degrade
+/// yuvarlağı; renk verilmezse paletin kart rengi). Simge rengi zemine göre
+/// seçilir, böylece açık renkli düğmelerde de okunur.
 class BigButton extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
-  final Color color;
+  final Color? color;
   final double size;
   final String? tooltip;
-  const BigButton({super.key, required this.child, this.onTap, this.color = const Color(0xFFFFE3B3), this.size = 64, this.tooltip});
+  const BigButton({super.key, required this.child, this.onTap, this.color, this.size = 64, this.tooltip});
 
   @override
   Widget build(BuildContext context) {
-    final b = Material(
-      color: color,
-      shape: const CircleBorder(side: BorderSide(color: Colors.black12, width: 1.5)),
-      elevation: 1,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(width: size, height: size, child: Center(child: child)),
+    final look = StudioLook.of(context);
+    final base = color ?? Color.lerp(look.card, look.accent, 0.12)!;
+    final fg = base.computeLuminance() > 0.35 ? KColors.ink : Colors.white;
+    final b = Opacity(
+      opacity: onTap == null ? 0.5 : 1,
+      child: Material(
+        color: Colors.transparent,
+        shape: CircleBorder(side: BorderSide(color: look.accent.withValues(alpha: 0.65), width: 2)),
+        elevation: 0,
+        child: Ink(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color.lerp(base, Colors.white, 0.14)!, Color.lerp(base, Colors.black, 0.22)!],
+            ),
+            boxShadow: [BoxShadow(color: look.accent.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 3))],
+          ),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: IconTheme.merge(
+                data: IconThemeData(color: fg),
+                child: DefaultTextStyle.merge(style: TextStyle(color: fg), child: Center(child: child)),
+              ),
+            ),
+          ),
+        ),
       ),
     );
     final t = tooltip;
@@ -397,8 +426,8 @@ class StepDots extends StatelessWidget {
           height: i < done ? 16 : 12,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: i < done ? KColors.good : KColors.soft,
-            border: Border.all(color: Colors.black12),
+            color: i < done ? StudioLook.good : Colors.white.withValues(alpha: 0.16),
+            border: Border.all(color: i < done ? Colors.white70 : Colors.white38),
           ),
         ),
     ]);

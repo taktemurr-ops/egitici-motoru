@@ -210,7 +210,7 @@ class _PianoViewState extends State<_PianoView> with Clock<_PianoView> {
                       const SizedBox(height: 6),
                       Container(width: 22, height: 22, decoration: BoxDecoration(shape: BoxShape.circle, color: _keyCols[k % 7])),
                       const SizedBox(height: 4),
-                      FittedBox(child: Text(names[k % 7], style: const TextStyle(fontWeight: FontWeight.w700))),
+                      FittedBox(child: Text(names[k % 7], style: const TextStyle(fontWeight: FontWeight.w700, color: KColors.ink))),
                     ]),
                   ),
                 ),
