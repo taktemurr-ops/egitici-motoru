@@ -662,7 +662,16 @@ class _CarViewState extends State<_CarView> with Clock<_CarView> {
             borderRadius: BorderRadius.circular(26),
           ),
           child: Stack(alignment: Alignment.center, children: [
-            Text(kCars[p.car], style: const TextStyle(fontSize: 120)),
+            // Araç resmi: kısa ekranda alana sığacak kadar küçülür, yazı ölçeğiyle büyümez.
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(kCars[p.car], style: const TextStyle(fontSize: 120), textScaler: TextScaler.noScaling),
+                ),
+              ),
+            ),
             if (dirty) const Positioned(top: 30, left: 40, child: Text('🟤 🟤', style: TextStyle(fontSize: 26))),
             if (scrub > 0) Positioned(top: 20, right: 40, child: Text('🫧' * scrub, style: const TextStyle(fontSize: 30))),
             Positioned(
