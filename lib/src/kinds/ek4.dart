@@ -6,6 +6,7 @@ import 'package:studio_core/app/services/audio.dart';
 import 'package:studio_core/core/rng.dart';
 
 import '../core.dart';
+import '../kid/read_aloud.dart';
 import '../texts.dart';
 import 'write.dart';
 
@@ -385,13 +386,60 @@ class _TaleViewState extends State<_TaleView> with Clock<_TaleView> {
   @override
   void dispose() {
     reader?.cancel();
+    if (speaking) ReadAloud.instance.stop();
     super.dispose();
   }
 
-  /// Birlikte oku: sözcükler sırayla vurgulanır.
-  void _readAlong() {
+  /// Sesli okuma: cihazın çevrimdışı sistem sesi metni okur, okunan sözcük
+  /// vurgulanır. Bu dilde ses yoksa (ya da web/test) "birlikte oku":
+  /// sözcükler sırayla vurgulanır.
+  bool speaking = false;
+
+  /// null: henüz bilinmiyor; false: bu dilde çevrimdışı ses yok.
+  bool? hasVoice;
+
+  void _stopReading() {
+    _gen++;
     reader?.cancel();
-    final n = et(widget.play.lang, tale.$2[page]).split(' ').length;
+    if (speaking) ReadAloud.instance.stop();
+    speaking = false;
+  }
+
+  int _gen = 0;
+
+  Future<void> _readAlong() async {
+    _stopReading();
+    final my = ++_gen;
+    final lang = widget.play.lang;
+    final text = et(lang, tale.$2[page]);
+    final pg = page;
+    setState(() => word = 0);
+    if (hasVoice != false) {
+      speaking = true;
+      final ok = await ReadAloud.instance.speak(text, lang, onWord: (i) {
+        if (mounted && page == pg && speaking) setState(() => word = i);
+      }, onDone: () {
+        if (mounted && page == pg) {
+          setState(() {
+            speaking = false;
+            word = -1;
+          });
+        }
+      });
+      if (!mounted || my != _gen) return;
+      if (ok) {
+        if (hasVoice != true) setState(() => hasVoice = true);
+        return;
+      }
+      speaking = false;
+      if (page != pg) return;
+      setState(() => hasVoice = false);
+    }
+    _highlightOnly(text.split(' ').length);
+  }
+
+  void _highlightOnly(int n) {
+    reader?.cancel();
     setState(() => word = 0);
     reader = Timer.periodic(const Duration(milliseconds: 520), (t) {
       if (!mounted) return;
@@ -484,13 +532,13 @@ class _TaleViewState extends State<_TaleView> with Clock<_TaleView> {
           BigButton(
             tooltip: et(lang, 'mkRead'),
             onTap: _readAlong,
-            child: const Icon(Icons.record_voice_over, size: 30),
+            child: Icon(hasVoice == false ? Icons.record_voice_over : Icons.volume_up_rounded, size: 30),
           ),
           const SizedBox(width: 24),
           BigButton(
             tooltip: et(lang, 'mkNext'),
             onTap: () {
-              reader?.cancel();
+              _stopReading();
               widget.play.sfx(Sfx.tap);
               setState(() {
                 page++;
