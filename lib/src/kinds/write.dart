@@ -357,13 +357,17 @@ class _SyllViewState extends State<_SyllView> with Clock<_SyllView> {
             Container(
               constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: i < placed ? const Color(0xFFCDEBD3) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: i == placed ? KColors.accent : KColors.line, width: i == placed ? 3 : 2),
               ),
-              child: Text(i < placed ? parts[i].trim() : '', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: KColors.ink)),
+              // Kutu yazı kadar geniş (satırın tamamını kaplamaz).
+              child: Center(
+                widthFactor: 1,
+                heightFactor: 1,
+                child: Text(i < placed ? parts[i].trim() : '', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: KColors.ink)),
+              ),
             ),
         ]),
       ),
@@ -384,8 +388,12 @@ class _SyllViewState extends State<_SyllView> with Clock<_SyllView> {
                     child: Container(
                       constraints: const BoxConstraints(minWidth: 84, minHeight: 84),
                       padding: const EdgeInsets.symmetric(horizontal: 14),
-                      alignment: Alignment.center,
-                      child: Text(tiles[i].$1, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: KColors.ink)),
+                      // Kutu yazı kadar geniş (satırın tamamını kaplayıp ekran dışına itmez).
+                      child: Center(
+                        widthFactor: 1,
+                        heightFactor: 1,
+                        child: Text(tiles[i].$1, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: KColors.ink)),
+                      ),
                     ),
                   ),
                 ),

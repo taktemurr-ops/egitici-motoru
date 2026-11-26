@@ -512,6 +512,8 @@ class _CodeViewState extends State<_CodeView> with Clock<_CodeView> {
                       child: Text(
                         p.walls.contains(i) ? '🌳' : (i == p.goal ? '🏠' : (p.flowers.contains(i) && !got.contains(i) ? '🌼' : '')),
                         style: TextStyle(fontSize: cs * 0.55),
+                        // Tahta resmi: hücre boyutuna göre çizilir, yazı ölçeğiyle büyümez.
+                        textScaler: TextScaler.noScaling,
                       ),
                     ),
                   ),
@@ -521,7 +523,7 @@ class _CodeViewState extends State<_CodeView> with Clock<_CodeView> {
                   top: (pos ~/ p.w) * cs,
                   width: cs,
                   height: cs,
-                  child: Center(child: Text(bump ? '😵' : '🐝', style: TextStyle(fontSize: cs * 0.6))),
+                  child: Center(child: Text(bump ? '😵' : '🐝', style: TextStyle(fontSize: cs * 0.6), textScaler: TextScaler.noScaling)),
                 ),
               ]);
             }),
