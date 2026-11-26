@@ -348,7 +348,7 @@ class _SyllViewState extends State<_SyllView> with Clock<_SyllView> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: i == placed ? KColors.accent : KColors.line, width: i == placed ? 3 : 2),
               ),
-              child: Text(i < placed ? parts[i].trim() : '', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
+              child: Text(i < placed ? parts[i].trim() : '', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: KColors.ink)),
             ),
         ]),
       ),
