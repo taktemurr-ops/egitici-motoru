@@ -7,6 +7,7 @@ import 'package:studio_core/core/strings.dart';
 import '../core.dart';
 import '../data/misc.dart';
 import '../data/titles.dart';
+import '../studio_chrome.dart';
 import '../texts.dart';
 import 'store.dart';
 
@@ -107,16 +108,15 @@ class _KidFrameState extends State<KidFrame> {
             padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
             child: Row(children: [
               BigButton(
-                size: 46,
-                color: KColors.tiles[3],
+                size: 48,
+                color: const Color(0xFFB0478E),
                 tooltip: et(lang, 'stickers'),
                 onTap: () => showDialog<void>(context: context, builder: (_) => StickerBook(lang: lang)),
                 child: const Icon(Icons.auto_stories, size: 24),
               ),
               const Spacer(),
               BigButton(
-                size: 46,
-                color: KColors.soft,
+                size: 48,
                 tooltip: et(lang, 'parents'),
                 onTap: _openParents,
                 child: const Icon(Icons.lock_outline, size: 22),
@@ -139,9 +139,10 @@ class _Celebration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = StudioLook.of(context);
     return IgnorePointer(
       child: Container(
-        color: Colors.white.withValues(alpha: 0.75),
+        color: look.base.withValues(alpha: 0.82),
         alignment: Alignment.center,
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.3, end: 1.0),
@@ -156,12 +157,20 @@ class _Celebration extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: KColors.tiles[sticker % KColors.tiles.length],
-                border: Border.all(color: KColors.sun, width: 6),
+                border: Border.all(color: StudioLook.gold, width: 6),
+                boxShadow: [BoxShadow(color: StudioLook.gold.withValues(alpha: 0.45), blurRadius: 24)],
               ),
               child: Text(kStickers[sticker % kStickers.length], style: const TextStyle(fontSize: 80)),
             ),
             const SizedBox(height: 14),
-            Text(et(lang, 'newSticker'), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: KColors.ink)),
+            Text(et(lang, 'newSticker'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  shadows: [Shadow(blurRadius: 8, color: Colors.black54, offset: Offset(0, 2))],
+                )),
           ]),
         ),
       ),
@@ -178,27 +187,30 @@ class _RestScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF26305A),
-      child: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text(bed ? '🌙' : '🧸', style: const TextStyle(fontSize: 96)),
-              const SizedBox(height: 12),
-              Text(et(lang, 'restTitle'),
-                  textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white)),
-              const SizedBox(height: 8),
-              Text(et(lang, bed ? 'bedBody' : 'restBody'),
-                  textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Color(0xFFDDE3F5))),
-              const SizedBox(height: 28),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)),
-                onPressed: onParent,
-                icon: const Icon(Icons.lock_outline),
-                label: Text(et(lang, 'parents')),
-              ),
-            ]),
+      color: StudioLook.of(context).base,
+      child: StudioBackdrop(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(bed ? '🌙' : '🧸', style: const TextStyle(fontSize: 96)),
+                const SizedBox(height: 12),
+                Text(et(lang, 'restTitle'),
+                    textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
+                const SizedBox(height: 8),
+                Text(et(lang, bed ? 'bedBody' : 'restBody'),
+                    textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Color(0xFFDDE3F5))),
+                const SizedBox(height: 28),
+                StudioButton(
+                  expand: false,
+                  tone: StudioButtonTone.ghost,
+                  icon: Icons.lock_outline,
+                  label: et(lang, 'parents'),
+                  onPressed: onParent,
+                ),
+              ]),
+            ),
           ),
         ),
       ),
@@ -220,13 +232,14 @@ Future<bool> parentGate(BuildContext context, String lang) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
+      icon: const Icon(Icons.lock_outline),
       title: Text(et(lang, 'askGrownup')),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text(et(lang, 'grownupQ')),
         const SizedBox(height: 12),
-        Text('$a × $b = ?', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+        Text('$a × $b = ?', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: StudioLook.of(ctx).number)),
         const SizedBox(height: 12),
-        Wrap(spacing: 8, runSpacing: 8, children: [
+        Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
           for (final o in list) OutlinedButton(onPressed: () => Navigator.of(ctx).pop(o == answer), child: Text('$o')),
         ]),
       ]),
@@ -244,16 +257,23 @@ class StickerBook extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final have = KidStore.instance.stickers.toSet();
+    final look = StudioLook.of(context);
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Row(children: [
-            const Icon(Icons.auto_stories),
+            Icon(Icons.auto_stories, color: look.accent),
             const SizedBox(width: 8),
-            Expanded(child: Text(et(lang, 'stickers'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
-            Text('${have.length}/${KidStore.stickerCount}', style: const TextStyle(fontWeight: FontWeight.w700)),
+            Expanded(
+                child: Text(et(lang, 'stickers'),
+                    style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: Colors.white))),
+            StudioStatChip(
+                icon: Icons.star_rounded,
+                color: StudioLook.gold,
+                compact: true,
+                text: '${have.length}/${KidStore.stickerCount}'),
             IconButton(tooltip: et(lang, 'close'), onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close)),
           ]),
           const SizedBox(height: 8),
@@ -269,12 +289,12 @@ class StickerBook extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: have.contains(i) ? KColors.tiles[i % KColors.tiles.length] : const Color(0xFFEDEDED),
-                      border: Border.all(color: have.contains(i) ? KColors.sun : Colors.black12, width: 2),
+                      color: have.contains(i) ? KColors.tiles[i % KColors.tiles.length] : Colors.white.withValues(alpha: 0.07),
+                      border: Border.all(color: have.contains(i) ? StudioLook.gold : Colors.white24, width: 2),
                     ),
                     child: have.contains(i)
                         ? FittedBox(child: Padding(padding: const EdgeInsets.all(4), child: Text(kStickers[i], style: const TextStyle(fontSize: 30))))
-                        : const Icon(Icons.star_border, color: Colors.black26),
+                        : const Icon(Icons.star_border, color: Colors.white38),
                   ),
               ],
             ),
@@ -312,7 +332,17 @@ class _ParentAreaState extends State<ParentArea> {
     final mx = math.max<int>(60, days.map((d) => hist[d] ?? 0).fold<int>(0, (a, b) => a > b ? a : b));
     final rows = rep.entries.toList()..sort((a, b) => b.value[0].compareTo(a.value[0]));
     return ListView(padding: const EdgeInsets.all(12), children: [
-      Text('${et(lang, 'today')}: ${s.todaySeconds ~/ 60} ${et(lang, 'min')}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+      StudioPanel(
+        margin: EdgeInsets.zero,
+        child: Row(children: [
+          StudioIconBadge(Icons.timer_outlined, color: StudioLook.of(context).play, size: 38),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text('${et(lang, 'today')}: ${s.todaySeconds ~/ 60} ${et(lang, 'min')}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+          ),
+        ]),
+      ),
       const SizedBox(height: 10),
       Text(et(lang, 'week')),
       const SizedBox(height: 6),
@@ -326,7 +356,7 @@ class _ParentAreaState extends State<ParentArea> {
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   height: 4 + 70 * (hist[d] ?? 0) / mx,
-                  decoration: BoxDecoration(color: KColors.accent, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: StudioLook.of(context).accent, borderRadius: BorderRadius.circular(4)),
                 ),
                 const SizedBox(height: 2),
                 Text(d.substring(8), style: const TextStyle(fontSize: 11)),
@@ -345,7 +375,7 @@ class _ParentAreaState extends State<ParentArea> {
               '${et(lang, 'time')}: ${e.value[3] ~/ 60} ${et(lang, 'min')}'),
         ),
       const SizedBox(height: 12),
-      Text(et(lang, 'localOnly'), style: const TextStyle(fontSize: 12, color: Colors.black54)),
+      Text(et(lang, 'localOnly'), style: const TextStyle(fontSize: 12, color: kStudioSubtle)),
     ]);
   }
 
@@ -389,7 +419,7 @@ class _ParentAreaState extends State<ParentArea> {
           ),
         ]),
       const SizedBox(height: 16),
-      Text(et(lang, 'localOnly'), style: const TextStyle(fontSize: 12, color: Colors.black54)),
+      Text(et(lang, 'localOnly'), style: const TextStyle(fontSize: 12, color: kStudioSubtle)),
     ]);
   }
 
@@ -400,14 +430,14 @@ class _ParentAreaState extends State<ParentArea> {
         length: 2,
         child: Scaffold(
           appBar: AppBar(
-            title: Text(et(lang, 'parents')),
+            title: StudioTitle(et(lang, 'parents'), icon: Icons.family_restroom_rounded),
             leading: IconButton(tooltip: et(lang, 'close'), icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
-            bottom: TabBar(tabs: [
+            bottom: TabBar(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), tabs: [
               Tab(icon: const Icon(Icons.insights), text: et(lang, 'report')),
               Tab(icon: const Icon(Icons.tune), text: et(lang, 'settings')),
             ]),
           ),
-          body: TabBarView(children: [_report(), _settings()]),
+          body: StudioBackdrop(child: TabBarView(children: [_report(), _settings()])),
         ),
       ),
     );

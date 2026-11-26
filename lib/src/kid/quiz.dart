@@ -5,6 +5,7 @@ import 'package:studio_core/app/services/audio.dart';
 import 'package:studio_core/core/rng.dart';
 
 import '../core.dart';
+import '../studio_chrome.dart';
 import '../texts.dart';
 import 'store.dart';
 import 'vis.dart';
@@ -253,17 +254,24 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
           width: tipW,
           bottom: 16,
           child: Material(
-            color: const Color(0xFFFFF7E6),
-            elevation: 3,
-            borderRadius: BorderRadius.circular(24),
+            color: StudioLook.of(context).sheet,
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(color: StudioLook.of(context).accent.withValues(alpha: 0.6), width: 1.5),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(children: [
-                if (tv != null) VisView(v: tv, lang: play.lang, size: 64),
+                if (tv != null)
+                  Container(
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                    child: VisView(v: tv, lang: play.lang, size: 64),
+                  ),
                 if (tv != null) const SizedBox(width: 12),
                 Expanded(
                   child: Text(et(play.lang, item.tip),
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: KColors.ink, height: 1.25)),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white, height: 1.25)),
                 ),
               ]),
             ),
