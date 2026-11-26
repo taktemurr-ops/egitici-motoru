@@ -39,7 +39,7 @@ void main() {
     }
     expect(kTurkey.length, 81);
     expect(kRegionNames.length, 7);
-    expect(kGameTitles.length, 36);
+    expect(kGameTitles.length, 41);
   });
 
   test('meslek, vücut, dinozor, meyve-sebze verisi 33 dilde', () {

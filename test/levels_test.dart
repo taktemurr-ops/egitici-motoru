@@ -3,7 +3,7 @@ import 'package:studio_core/core/level_plan.dart';
 import 'package:egitici_motoru/egitici_motoru.dart';
 
 void main() {
-  test('36 tür', () => expect(kEgiticiKinds.length, 36));
+  test('41 tür', () => expect(kEgiticiKinds.length, 41));
 
   for (final e in kEgiticiKinds.entries) {
     test('${e.key}: bölümler kurulur ve doğrulanır', () {

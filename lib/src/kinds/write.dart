@@ -50,10 +50,17 @@ class HarfIzlemeKind extends EgiticiKind {
 const int _g = 40; // örnekleme ızgarası
 const double _side = 200;
 
+/// İzleme ekranı; [glyphAt] verilirse arayüz dilinin harfleri yerine onu
+/// izletir (Dünya Alfabeleri), [labelAt] harfin okunuşunu üstte gösterir.
+Widget traceView(EPlay play, TracePuzzle p, {String Function(int i)? glyphAt, String Function(int i)? labelAt}) =>
+    _TraceView(play: play, p: p, glyphAt: glyphAt, labelAt: labelAt);
+
 class _TraceView extends StatefulWidget {
   final EPlay play;
   final TracePuzzle p;
-  const _TraceView({required this.play, required this.p});
+  final String Function(int i)? glyphAt;
+  final String Function(int i)? labelAt;
+  const _TraceView({required this.play, required this.p, this.glyphAt, this.labelAt});
 
   @override
   State<_TraceView> createState() => _TraceViewState();
@@ -68,6 +75,8 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
   int _job = 0;
 
   String get glyph {
+    final f = widget.glyphAt;
+    if (f != null) return f(idx);
     final it = widget.p.items[idx];
     final lang = widget.play.lang;
     if (it.$1 == 2) return numL(it.$2, lang);
@@ -191,8 +200,14 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
   Widget build(BuildContext context) {
     final m = mask;
     final cover = m == null || m.isEmpty ? 0.0 : painted.where(m.contains).length / m.length;
+    final label = widget.labelAt;
     return Column(children: [
       Padding(padding: const EdgeInsets.only(top: 4), child: StepDots(done: idx, total: widget.p.items.length)),
+      if (label != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(label(idx), textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+        ),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
         child: Row(children: [
