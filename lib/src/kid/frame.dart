@@ -432,7 +432,15 @@ class _ParentAreaState extends State<ParentArea> {
           appBar: AppBar(
             title: StudioTitle(et(lang, 'parents'), icon: Icons.family_restroom_rounded),
             leading: IconButton(tooltip: et(lang, 'close'), icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
-            bottom: TabBar(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), tabs: [
+            bottom: TabBar(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                labelColor: Colors.white,
+                indicator: BoxDecoration(
+                  color: StudioLook.of(context).accent.withValues(alpha: 0.30),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: StudioLook.of(context).accent, width: 1.5),
+                ),
+                tabs: [
               Tab(icon: const Icon(Icons.insights), text: et(lang, 'report')),
               Tab(icon: const Icon(Icons.tune), text: et(lang, 'settings')),
             ]),

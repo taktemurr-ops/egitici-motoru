@@ -9,6 +9,7 @@ import '../data/names.dart';
 import '../kid/quiz.dart';
 import '../kid/store.dart';
 import '../kid/vis.dart';
+import '../studio_chrome.dart';
 import 'quizzes.dart';
 
 // ---------------------------------------------------------------- duygular
@@ -515,9 +516,15 @@ class _BinTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final col = kBinColors[bin];
+    final look = StudioLook.of(context);
+    final bg = ok ? const Color(0xFFCDEBD3) : (bad ? const Color(0xFFF1E3DF) : Color.lerp(look.card, col, hot ? 0.75 : 0.5)!);
+    final fg = bg.computeLuminance() > 0.35 ? KColors.ink : Colors.white;
     final tile = Material(
-      color: ok ? const Color(0xFFCDEBD3) : (bad ? const Color(0xFFF1E3DF) : col.withValues(alpha: hot ? 0.55 : 0.32)),
-      borderRadius: BorderRadius.circular(18),
+      color: bg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: hot ? look.accent : Colors.white24, width: hot ? 2 : 1),
+      ),
       elevation: hot ? 4 : 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -533,7 +540,7 @@ class _BinTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(nm(kBinKeys[bin], lang), style: const TextStyle(fontWeight: FontWeight.w800, color: KColors.ink, fontSize: 18)),
+                  child: Text(nm(kBinKeys[bin], lang), style: TextStyle(fontWeight: FontWeight.w800, color: fg, fontSize: 18)),
                 ),
               ),
             ),
