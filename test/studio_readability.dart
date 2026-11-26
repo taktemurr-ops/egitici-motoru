@@ -151,3 +151,86 @@ void expectReadable(WidgetTester tester, {String where = '', double min = 3.0}) 
   final bad = unreadableTexts(tester, min: min);
   expect(bad, isEmpty, reason: 'Okunmayan yazı $where: ${bad.join(', ')}');
 }
+
+/// Açık renkli büyük yüzeyler (eski açık görünümün izleri): rapor için.
+List<String> lightSurfaces(WidgetTester tester, {double minArea = 2400}) {
+  final out = <String>[];
+  for (final e in find
+      .byWidgetPredicate((w) => w is DecoratedBox || w is ColoredBox || w is Ink || w is Material)
+      .evaluate()) {
+    final w = e.widget;
+    Color? c;
+    if (w is ColoredBox) {
+      c = w.color;
+    } else if (w is DecoratedBox) {
+      c = _fromDecoration(w.decoration);
+    } else if (w is Ink) {
+      c = _fromDecoration(w.decoration);
+    } else if (w is Material && w.type != MaterialType.transparency) {
+      c = w.color;
+    }
+    if (c == null || c.a < 0.6 || c.computeLuminance() < 0.45) continue;
+    final ro = e.renderObject;
+    if (ro is! RenderBox || !ro.hasSize || ro.size.width * ro.size.height < minArea) continue;
+    final texts = <String>[];
+    void walk(Element x) {
+      if (texts.length >= 3) return;
+      final rw = x.widget;
+      if (rw is RichText) {
+        final t = rw.text.toPlainText().trim();
+        if (t.isNotEmpty) texts.add(t.length > 18 ? t.substring(0, 18) : t);
+      }
+      x.visitChildElements(walk);
+    }
+
+    e.visitChildElements(walk);
+    out.add('${w.runtimeType} #${c.toARGB32().toRadixString(16)} '
+        '${ro.size.width.round()}x${ro.size.height.round()} ${texts.join(' | ')}');
+  }
+  return out;
+}
+
+final Set<String> _reported = {};
+
+/// Açık yüzeyleri test çıktısına yazar (aynı satır bir kez).
+void reportLight(WidgetTester tester, String where) {
+  for (final s in lightSurfaces(tester)) {
+    final line = 'AÇIK ZEMİN [$where] $s';
+    if (_reported.add(line)) debugPrint(line);
+  }
+}
+
+bool _isOverlay(Widget w) => w is Dialog || w is AlertDialog || w is SimpleDialog || w is BottomSheet;
+
+/// Ekranı ızgara halinde dokunarak gezer; açılan her pencere ve her adımda
+/// okunurluğu toplar (pencereler kapatılır).
+Future<List<String>> sweepReadability(WidgetTester tester, String name, {int rows = 9, int cols = 6, double top = 60}) async {
+  final issues = <String>{};
+  void check(String where) {
+    for (final s in unreadableTexts(tester)) {
+      issues.add('$where: $s');
+    }
+    reportLight(tester, '$name $where');
+  }
+
+  check('açılış');
+  final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+  for (var y = top; y < size.height - 10; y += size.height / rows) {
+    for (var x = 20.0; x < size.width; x += size.width / cols) {
+      await tester.tapAt(Offset(x, y));
+      await tester.pump(const Duration(milliseconds: 150));
+      if (find.byWidgetPredicate(_isOverlay).evaluate().isNotEmpty) {
+        await tester.pump(const Duration(milliseconds: 300));
+        check('pencere');
+        await tester.tapAt(const Offset(5, 5));
+        await tester.pump(const Duration(milliseconds: 300));
+        if (find.byWidgetPredicate(_isOverlay).evaluate().isNotEmpty) {
+          await tester.state<NavigatorState>(find.byType(Navigator).last).maybePop();
+          await tester.pump(const Duration(milliseconds: 300));
+        }
+      }
+    }
+    check('oyun');
+  }
+  return issues.toList();
+}

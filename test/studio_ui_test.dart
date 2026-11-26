@@ -36,7 +36,8 @@ void main() {
       phone(tester);
       await tester.pumpWidget(studioHost(stageFor(kind, 'tr')));
       await tester.pump(const Duration(milliseconds: 400));
-      expectReadable(tester, where: kind);
+      final issues = await sweepReadability(tester, kind, top: 70);
+      expect(issues, isEmpty, reason: 'Okunmayan yazı ($kind): ${issues.join('; ')}');
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 3));
     });
