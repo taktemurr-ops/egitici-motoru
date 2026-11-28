@@ -89,9 +89,14 @@ class EgiticiRules extends GameRules<ELevel> {
   @override
   List<MissionTemplate> get missionTemplates => kind.missions;
 
+  /// Çocuk kampanyasında nazik ilerleme: stüdyo planı ilk 20 bölümü zorluk
+  /// 1'de tutar; 5. bölümden sonra bir basamak (ör. 3 yerine 4 seçenek,
+  /// biraz daha uzun bölüm). Zorlanan çocuğa seçenek azaltma (beceri) sürer.
+  static int rampOf(LevelSpec spec) => spec.mode == GameModeId.campaign && spec.levelId >= 5 ? 1 : 0;
+
   @override
   ELevel generate(LevelSpec spec) {
-    final d = clampI(spec.difficulty, 1, 10);
+    final d = clampI(spec.difficulty + rampOf(spec), 1, 10);
     return ELevel(kind.id, d, realizeEgitici(kind, d, spec.seed));
   }
 
