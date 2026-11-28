@@ -40,7 +40,7 @@ const List<Job> kJobs = [
   Job('j.doctor', ['🩺', '💉', '🩹'], ['🏥']),
   Job('j.teacher', ['📚', '✏️', '📓'], ['🏫']),
   Job('j.firefighter', ['🧯', '🚒'], ['🔥']),
-  Job('j.police', ['🚓', '🚨'], ['🚦']),
+  Job('j.police', ['🚓', '🚔'], ['🚦']), // 🚨 tepe lambası itfaiye/ambulansta da var
   Job('j.cook', ['🍳', '🥄', '🧂'], ['🍽️']),
   Job('j.farmer', ['🚜', '🧺'], ['🌾', '🐄']),
   Job('j.pilot', ['✈️'], ['☁️']),
@@ -66,7 +66,7 @@ const List<String> kBodyKeys = [
 
 /// Beş duyu (göz, kulak, burun, dil, el) ve onlarla algılanan şeyler.
 const List<List<String>> kSenseThings = [
-  ['🌈', '⭐', '🎆', '📺'],
+  ['🌈', '⭐', '🖼️', '👓'], // 🎆 ve 📺 sesle de algılanır (kulak da doğru olurdu)
   ['🎵', '🔔', '🥁', '📢'],
   ['🌸', '🌹', '💐', '🦨'],
   ['🍋', '🍭', '🍯', '🧂'],
@@ -87,7 +87,7 @@ const Map<int, List<String>> kBodyJobs = {
 
 /// Anlamca birbirine çok yakın organ çiftleri (aynı soruda yan yana çıkmaz).
 const List<List<int>> kBodyClash = [
-  [5, 9], [5, 3], [9, 3], [6, 7], [4, 8], [12, 2], [12, 5],
+  [5, 9], [5, 3], [9, 3], [6, 7], [4, 8], [12, 2], [12, 5], [13, 6], [13, 7], // dik durmak: ayak/bacak da doğru olurdu; sv/nb'de bacak ve kemik aynı sözcük (ben/bein)
 ];
 
 bool bodyClash(int a, int b) => kBodyClash.any((p) => (p[0] == a && p[1] == b) || (p[0] == b && p[1] == a));
@@ -140,7 +140,7 @@ const List<Produce> kProduce = [
   Produce('f.grapes', true, 5, 2),
   Produce('f.strawberry', true, 0, 2),
   Produce('f.orange', true, 1, 0),
-  Produce('f.watermelon', true, 3, 2),
+  Produce('f.watermelon', true, -1, 2), // 🍉 dilimi kırmızı görünür; "yeşil" sorusunda yanıltıcı
   Produce('f.pear', true, 3, 0),
   Produce('f.cherry', true, 0, 0),
   Produce('f.lemon', true, 2, 0),

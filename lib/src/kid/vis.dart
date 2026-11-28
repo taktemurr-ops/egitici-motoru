@@ -94,6 +94,24 @@ String letterAt(String lang, int i, int off, {bool lower = false}) {
   return lower ? lo[k] : up[k];
 }
 
+/// "Sıradaki harf" sorusunun harfi. Çincede alfabe yoktur; harf listesi
+/// (一 二 三 … 人 口 大 …) sırasız olduğundan "大 小 山 → ?" gibi öğrenilemez
+/// bir soru çıkıyordu. Çincede bu soru Çince sayılarla (一 … 二十五) sorulur.
+String seqLetterAt(String lang, int i, int off) {
+  if (lang != 'zh') return letterAt(lang, i, off);
+  final up = kAlphaUpper['zh']!;
+  final span = up.length - 19;
+  return zhNumeral(clampI(i + (span > 0 ? off % span : 0), 0, up.length - 1) + 1);
+}
+
+/// 1..99 Çince sayı (一, 十, 十一, 二十, 二十五 …).
+String zhNumeral(int n) {
+  const d = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  if (n < 10) return d[n];
+  final t = n ~/ 10, u = n % 10;
+  return '${t == 1 ? '' : d[t]}十${d[u]}';
+}
+
 bool bicameral(String lang) {
   final up = kAlphaUpper[lang] ?? const [];
   final lo = kAlphaLower[lang] ?? const [];
@@ -231,10 +249,10 @@ class VisView extends StatelessWidget {
         return _txt(v.s, k: 0.24);
       }
       case VT.letter: {
-        return _txt(letterAt(lang, v.a, v.b, lower: v.c == 1), k: 0.56);
+        return _txt(v.c == 2 ? seqLetterAt(lang, v.a, v.b) : letterAt(lang, v.a, v.b, lower: v.c == 1), k: 0.56);
       }
       case VT.letters: {
-        return _txt([for (var i = 0; i < v.c; i++) letterAt(lang, v.a + i, v.b)].join(' ') + ' ?', k: 0.3);
+        return _txt([for (var i = 0; i < v.c; i++) seqLetterAt(lang, v.a + i, v.b)].join(' ') + ' ?', k: 0.3);
       }
       case VT.number: {
         return _txt(numL(v.a, lang), k: 0.5);
@@ -432,7 +450,7 @@ class VisView extends StatelessWidget {
       // Yalnız düz Latin sözcükler (İngilizce kelime kartları) İngilizce okunur.
       return RegExp(r"^[A-Za-z][A-Za-z '\-]*$").hasMatch(v.s) ? (v.s, 'en') : null;
     case VT.letter:
-      s = letterAt(lang, v.a, v.b, lower: v.c == 1);
+      s = v.c == 2 ? seqLetterAt(lang, v.a, v.b) : letterAt(lang, v.a, v.b, lower: v.c == 1);
     case VT.number:
       s = numL(v.a, lang);
     case VT.digital:

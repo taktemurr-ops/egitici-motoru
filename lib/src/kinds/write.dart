@@ -49,6 +49,10 @@ class HarfIzlemeKind extends EgiticiKind {
   Widget build(EPlay play) => _TraceView(play: play, p: play.puzzle as TracePuzzle);
 }
 
+/// İzleme başarılı mı: harfin en az %70'i boyanmış ve dışarı taşma sınırlı.
+/// Harfin %85'i boyandıysa taşma payı %55'ten %70'e çıkar.
+bool traceDone(double cover, double outside) => cover >= 0.7 && outside <= (cover >= 0.85 ? 0.7 : 0.55);
+
 const int _g = 40; // örnekleme ızgarası
 const double _side = 200;
 
@@ -226,7 +230,10 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView>, SingleTi
     final hit = painted.where(m.contains).length;
     final cover = hit / m.length;
     final outside = painted.isEmpty ? 0.0 : (painted.length - hit) / painted.length;
-    if (cover >= 0.7 && outside <= 0.55) {
+    // İnce çizgili yazılarda (kana, Çince, Devanagari, Arapça) 26 px fırça
+    // izi doğru izlemede bile harfin dışına taşar; harfin neredeyse tamamı
+    // boyandıysa taşma payı genişler (çocuk takılıp kalmasın).
+    if (traceDone(cover, outside)) {
       widget.play.sfx(Sfx.clear);
       widget.play.answer(true);
       widget.play.say(et(widget.play.lang, 'praise${(idx % 3) + 1}'));

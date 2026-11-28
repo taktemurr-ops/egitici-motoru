@@ -120,8 +120,10 @@ const List<(List<String>, List<String>)> kOpposites = [
   (['😀'], ['😢']), // mutlu – üzgün
 ];
 
-/// Anlamca karışabilecek çift grupları (ör. fil hem büyük hem ağır).
-bool oppClash(int a, int b) => _clash(const [0, 7, 1, 8, 5, 9, 1, 5], a, b);
+/// Anlamca karışabilecek çift grupları (ör. fil hem büyük hem ağır; balon
+/// hem hafif hem yukarı çıkar; roket hem hızlı hem yukarı; yağmurun
+/// karşıtı güneş de olabilir).
+bool oppClash(int a, int b) => _clash(const [0, 7, 1, 8, 5, 9, 1, 5, 6, 7, 2, 6, 5, 8], a, b);
 
 int oppPairOf(String s) {
   for (var i = 0; i < kOpposites.length; i++) {
@@ -215,12 +217,14 @@ class YonKind extends QuizKind {
 
 // ---------------------------------------------------------------- sağlıklı alışkanlıklar
 
-/// Günlük sıralar (sıra önemli).
+/// Günlük sıralar (sıra önemli). Yalnız sırası tartışmasız adımlar: önceki
+/// listede "uyan → ?" sorusunda diş fırçalama doğru, kahvaltı ve el yıkama
+/// yanlış sayılıyordu; aileden aileye değişen sıralar çocuğu cezalandırır.
 const List<List<String>> kRoutines = [
-  ['⏰', '🪥', '🧼', '🥣', '🎒'], // sabah: uyan, diş, el, kahvaltı, okul
+  ['🧼', '🍽️', '🪥'], // yemek: önce el yıkanır, yemek yenir, sonra diş fırçalanır
+  ['🥱', '🛏️', '😴'], // uyku: uykusu gelir, yatağa yatar, uyur
+  ['🧦', '👟', '🏃'], // dışarı: çorap, ayakkabı, koşup oyna
   ['💧', '🧼', '👐', '🧻'], // el yıkama: ıslat, sabun, köpürt, kurula
-  ['🛁', '🪥', '📖', '😴'], // akşam: banyo, diş, masal, uyku
-  ['🧺', '👕', '🧦', '👟'], // giyinme: dolap, tişört, çorap, ayakkabı
 ];
 
 /// Durum → iyi seçim, daha az iyi seçimler.
@@ -303,7 +307,7 @@ class SaglikKind extends QuizKind {
 /// Kutular: 0 kâğıt, 1 plastik, 2 cam, 3 metal, 4 organik.
 const List<List<String>> kWaste = [
   ['📰', '📦', '📄', '✉️', '🗞️'],
-  ['🧴', '🥤', '🛍️'],
+  ['🧴', '🥤'], // 🛍️ alışveriş poşeti emojisi çoğu cihazda kâğıt torba; çıkarıldı
   ['🧪', '🥛'],
   ['🥫', '🔩', '📎', '🔧'],
   ['🍌', '🍎', '🥕', '🍂', '🥚', '🍞'],

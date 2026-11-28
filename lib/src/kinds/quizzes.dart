@@ -68,7 +68,8 @@ class AlfabeKind extends QuizKind {
       final i = r.nextInt(17);
       final ans = i + 3;
       final wrong = distinct(r, 20, n - 1, avoid: {ans});
-      return qi(Vis(VT.letters, a: i, b: off, c: 3), Vis(VT.letter, a: ans, b: off), [for (final w in wrong) Vis(VT.letter, a: w, b: off)], r);
+      // c = 2: "sıradaki harf" sorusunun harfi (sırası anlamlı dizi; bkz. seqLetterAt).
+      return qi(Vis(VT.letters, a: i, b: off, c: 3), Vis(VT.letter, a: ans, b: off, c: 2), [for (final w in wrong) Vis(VT.letter, a: w, b: off, c: 2)], r);
     }
     final i = r.nextInt(20);
     final wrong = distinct(r, 20, n - 1, avoid: {i});
@@ -178,10 +179,10 @@ const List<List<String>> _colorThings = [
   ['🍌', '🍋', '🌻', '🐥'],
   ['🥦', '🐸', '🍀', '🥒'],
   ['🌊', '🐳', '💧', '🧢'],
-  ['🍇', '🍆', '☂️', '🔮'],
-  ['🌸', '🦩', '🎀', '🌷'],
+  ['🍇', '🍆', '💜', '🔮'], // ☂️ şemsiye bazı cihazlarda mor değil
+  ['🌸', '🦩', '🎀', '🐷'], // 🌷 lale bazı cihazlarda kırmızı
   ['🐻', '🌰', '🥔', '🍫'],
-  ['🐜', '🎩', '🕷️', '🎱'],
+  ['🖤', '🎩', '🕷️', '🎱'], // 🐜 karınca bazı cihazlarda kahverengi/kırmızı
   ['⛄', '🥛', '☁️', '🦢'],
 ];
 
@@ -229,7 +230,8 @@ List<Vis> _uniq(List<Vis> xs) {
 
 // ---------------------------------------------------------------- geometri
 
-const List<(String, int)> _solidThings = [('🎲', 0), ('📦', 0), ('🧊', 0), ('⚽', 1), ('🏀', 1), ('🌍', 1), ('🥫', 2), ('🔋', 2), ('🥁', 2), ('🍦', 3), ('🥕', 3)];
+// 📦 koli küp değil dikdörtgenler prizmasıdır; çıkarıldı.
+const List<(String, int)> _solidThings = [('🎲', 0), ('🧊', 0), ('⚽', 1), ('🏀', 1), ('🌍', 1), ('🥫', 2), ('🔋', 2), ('🥁', 2), ('🍦', 3), ('🥕', 3)];
 
 class GeometriKind extends QuizKind {
   const GeometriKind();
@@ -483,6 +485,9 @@ class BayrakKind extends QuizKind {
   }
 }
 
+/// Başkenti uluslararası tartışmalı ülkeler çocuk sorusunda sorulmaz.
+final List<String> _capCountries = [for (final c in kMapCountries) if (c != 'IL') c];
+
 class BaskentKind extends QuizKind {
   const BaskentKind();
   @override
@@ -490,9 +495,9 @@ class BaskentKind extends QuizKind {
 
   @override
   QItem? item(int d, SeededRandom r, int k) {
-    final pool = d <= 3 ? math.min<int>(30, kMapCountries.length) : kMapCountries.length;
+    final pool = d <= 3 ? math.min<int>(30, _capCountries.length) : _capCountries.length;
     final n = optCount(d);
-    final codes = [for (final i in distinct(r, pool, n)) kMapCountries[i]];
+    final codes = [for (final i in distinct(r, pool, n)) _capCountries[i]];
     final t = d >= 5 ? r.nextInt(3) : r.nextInt(2);
     switch (t) {
       case 0: {
@@ -511,6 +516,11 @@ class BaskentKind extends QuizKind {
 // ---------------------------------------------------------------- güneş sistemi
 
 const List<(String, int)> _planetFacts = [('🏠', 3), ('🔴', 4), ('🪐', 6), ('🔥', 2), ('🐘', 5), ('🥶', 8), ('☀️', 0), ('🌙', 9)];
+
+/// Bir ipucuna "ikinci doğru" olabilecek gökcisimleri çeldirici olmaz:
+/// 🔥 en sıcak / 🐘 en büyük sorusunda Güneş, 🥶 en soğuk sorusunda Uranüs
+/// (en düşük ölçülen sıcaklık Uranüs'tedir).
+Set<int> _planetAlsoRight(String fact) => switch (fact) { '🔥' || '🐘' => const {0}, '🥶' => const {7}, _ => const <int>{} };
 
 class GunesKind extends QuizKind {
   const GunesKind();
@@ -534,7 +544,7 @@ class GunesKind extends QuizKind {
       }
       default: {
         final f = r.pick(_planetFacts);
-        final others = distinct(r, 10, n - 1, avoid: {f.$2});
+        final others = distinct(r, 10, n - 1, avoid: {f.$2, ..._planetAlsoRight(f.$1)});
         return qi(Vis(VT.emoji, s: f.$1), Vis(VT.planet, a: f.$2, c: d >= 4 ? 1 : 0), [for (final o in others) Vis(VT.planet, a: o, c: d >= 4 ? 1 : 0)], r);
       }
     }
@@ -546,14 +556,15 @@ class GunesKind extends QuizKind {
 const List<List<String>> _seasonThings = [
   ['🌷', '🐣', '🌸', '🦋', '🌱'],
   ['🏖️', '🍉', '🍦', '🕶️', '🌞'],
-  ['🍂', '🍁', '🌰', '🍄', '🧺'],
+  ['🍂', '🍁', '🌰', '🍄'],
   ['⛄', '❄️', '🧣', '🛷', '🧤'],
 ];
 const List<String> _seasonIcon = ['🌸', '☀️', '🍂', '❄️'];
 const List<(String, List<String>)> _weatherWear = [
-  ('☀️', ['🕶️', '🧢', '🩳']),
-  ('🌧️', ['☂️', '👢', '🧥']),
-  ('❄️', ['🧤', '🧣', '🥾']),
+  // Her eşya yalnız bir havaya özgü (ör. mont ve bot karda da giyilir; çıkarıldı).
+  ('☀️', ['🕶️', '🩳']),
+  ('🌧️', ['☂️', '🌂']),
+  ('❄️', ['🧤', '🧣']),
 ];
 
 class MevsimKind extends QuizKind {
@@ -632,6 +643,18 @@ class TrafikKind extends QuizKind {
 
 // ---------------------------------------------------------------- hayvanlar ve sesleri
 
+/// Hayvanın ikinci doğal yaşam alanı (çeldirici olarak gösterilmez):
+/// ördek çiftlikte de, yılan ormanda da, tavşan çiftlikte/evde de yaşar,
+/// kurbağa ormanda, kaplumbağa karada da görülür.
+const Map<int, Set<int>> _homeAlso = {
+  4: {0}, // ördek: çiftlik
+  5: {1}, // kuş: evde kafeste
+  8: {2}, // kurbağa: orman
+  14: {2, 3}, // yılan: orman
+  15: {0, 1}, // tavşan: çiftlik, ev
+  18: {3, 6}, // kaplumbağa: sıcak kara
+};
+
 class HayvanKind extends QuizKind {
   const HayvanKind();
   @override
@@ -650,7 +673,7 @@ class HayvanKind extends QuizKind {
       case 1: {
         final a = r.nextInt(kAnimalEmoji.length);
         final home = kAnimalHome[a];
-        final others = distinct(r, kHomeEmoji.length, math.min<int>(n - 1, 3), avoid: {home});
+        final others = distinct(r, kHomeEmoji.length, math.min<int>(n - 1, 3), avoid: {home, ...?_homeAlso[a]});
         return qi(Vis(VT.animal, a: a), Vis(VT.home, a: home), [for (final o in others) Vis(VT.home, a: o)], r);
       }
       default: {

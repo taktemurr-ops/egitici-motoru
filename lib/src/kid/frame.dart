@@ -221,7 +221,27 @@ class _RestScreen extends StatelessWidget {
 /// Yetişkin kontrolü: çarpımın sonucu tuş takımıyla YAZILIR (seçenekten
 /// seçilmez: rastgele dokunuşla geçme olasılığı 1/4 yerine ~1/90). Üç yanlışta
 /// kapı kapanır. Çocukların ayarlara ve satın almalara kazara girmesini önler.
+/// Üç yanlıştan sonra kapı bir süre açılmaz: rastgele dokunan çocuğun
+/// kapıyı defalarca açıp deneme yoluyla geçmesini zorlaştırır.
+DateTime? gateLockedUntil;
+const Duration kGateLock = Duration(seconds: 60);
+
 Future<bool> parentGate(BuildContext context, String lang) async {
+  final lock = gateLockedUntil;
+  if (lock != null && DateTime.now().isBefore(lock)) {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.lock_clock_rounded, size: 40),
+          const SizedBox(width: 12),
+          Flexible(child: Text(et(lang, 'askGrownup'))),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(et(lang, 'close')))],
+      ),
+    );
+    return false;
+  }
   final r = math.Random();
   final a = 6 + r.nextInt(4), b = 6 + r.nextInt(4);
   final ok = await showDialog<bool>(
@@ -265,6 +285,7 @@ class _GateDialogState extends State<_GateDialog> {
     }
     fails++;
     if (fails >= 3) {
+      gateLockedUntil = DateTime.now().add(kGateLock);
       Navigator.of(context).pop(false);
       return;
     }

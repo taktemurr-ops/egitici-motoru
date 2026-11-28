@@ -193,7 +193,8 @@ class DinoKind extends QuizKind {
       case 0: {
         // ne yerdi?
         final diet = kDinoDiet[i];
-        return qi(_dino(i, d), Vis(VT.emoji, s: kDietEmoji[diet]), [for (var x = 0; x < 3; x++) if (x != diet) Vis(VT.emoji, s: kDietEmoji[x])], r,
+        // Balık yiyen için "et" çeldirici değildir (balık da ettir): yalnız bitki.
+        return qi(_dino(i, d), Vis(VT.emoji, s: kDietEmoji[diet]), [for (var x = 0; x < 3; x++) if (x != diet && !(diet == 2 && x == 1)) Vis(VT.emoji, s: kDietEmoji[x])], r,
             tip: tip, tipVis: tip.isEmpty ? null : _dino(i, 1));
       }
       case 1: {
