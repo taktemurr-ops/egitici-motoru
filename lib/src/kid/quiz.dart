@@ -253,17 +253,23 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
   Widget build(BuildContext context) {
     final q = widget.q;
     final vis = _visible();
-    return LayoutBuilder(builder: (context, box) {
+    return KidPlaymat(kind: play.kind, child: LayoutBuilder(builder: (context, box) {
       final w = box.maxWidth.isFinite ? box.maxWidth : 400.0;
       final h = box.maxHeight.isFinite ? box.maxHeight : 700.0;
       final cols = q.grid ? (vis.length <= 4 ? 2 : (vis.length <= 9 ? 3 : 4)) : (vis.length <= 4 ? 2 : 3);
       final rows = (vis.length + cols - 1) ~/ cols;
       final promptH = item.prompt == null ? 0.0 : math.min(h * 0.36, w * 0.62);
       final raceH = q.race ? 54.0 : 0.0;
-      final avail = h - promptH - raceH - 70;
+      final avail = h - promptH - raceH - 84;
       final tile = clampD(math.min((w - 24) / cols - 12, avail / rows - 12), 56, 220);
       final body = Column(children: [
-        Padding(padding: const EdgeInsets.only(top: 4), child: StepDots(done: idx, total: q.items.length)),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: DecoratedBox(
+            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.32), borderRadius: BorderRadius.circular(14)),
+            child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), child: StepDots(done: idx, total: q.items.length)),
+          ),
+        ),
         if (q.race) SizedBox(height: raceH, child: _RaceTrack(me: idx + (okAt == null ? 0 : 1), rival: rival, total: q.items.length)),
         if (item.prompt != null)
           SizedBox(
@@ -351,7 +357,7 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
           ),
         ),
       ]);
-    });
+    }));
   }
 }
 
@@ -467,4 +473,90 @@ class _Glow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Oyun alanı teması: her soru oyununun kendi zemini (renk geçişi ve silik
+/// motif deseni). Aynı soru motorunu kullanan oyunlar oyun içinde de ayrı
+/// görünür; çerçeve (çıkartma, ebeveyn düğmesi) onaylı tasarımda kalır.
+const Map<String, (int, int, String)> kKidThemes = {
+  'alfabe': (0xFFFFEDBF, 0xFFFFC96B, '✏️'),
+  'sayi': (0xFFDDF3FF, 0xFF9AD0F5, '🔢'),
+  'saat': (0xFFECE6FF, 0xFFB9A7F0, '⏰'),
+  'sekil-renk': (0xFFFFE4EE, 0xFFF7A8C4, '🔺'),
+  'geometri': (0xFFE3F7EE, 0xFF92D8B5, '🔷'),
+  'matematik-yarisi': (0xFFE9F4DC, 0xFFA9D18E, '🏁'),
+  'carpim': (0xFFFFEDDA, 0xFFF5B37A, '✖️'),
+  'toplama-cikarma': (0xFFE3F5FF, 0xFF8CCBEB, '➕'),
+  'kesirler': (0xFFFFF1E3, 0xFFF2BE8A, '🍕'),
+  'para-sayma': (0xFFFFF6D8, 0xFFE8CD6A, '💰'),
+  'bayraklar': (0xFFE6EDFF, 0xFFA3B9F0, '🚩'),
+  'baskentler': (0xFFE4F2F8, 0xFF94C6DD, '🗺️'),
+  'gunes-sistemi': (0xFF2E3466, 0xFF141833, '✨'),
+  'mevsimler': (0xFFEAF7E2, 0xFFB7DE9E, '🍃'),
+  'trafik': (0xFFECEEF1, 0xFFB8C0C8, '🚦'),
+  'hayvanlar': (0xFFF5EEE1, 0xFFD7BF94, '🐾'),
+  'ingilizce': (0xFFE6F0FF, 0xFFF2C5CF, '🔤'),
+  'dikkat': (0xFFF3E9FF, 0xFFC9AEF2, '🔍'),
+  'nota': (0xFFFFF1F6, 0xFFF0B4CB, '🎵'),
+  'duygular': (0xFFFFF3E0, 0xFFF6C98F, '💛'),
+  'zit-kavramlar': (0xFFE9F1F8, 0xFFF4DDBE, '↔️'),
+  'yonler': (0xFFE6F7F4, 0xFF9AD6CA, '🧭'),
+  'saglikli-aliskanliklar': (0xFFE8F8EC, 0xFFA5DDB3, '🍎'),
+  'meslekler': (0xFFF1ECE5, 0xFFCDB89C, '🧰'),
+  'vucudumuz': (0xFFFFEBE8, 0xFFF3B3A8, '❤️'),
+  'dinozorlar': (0xFFE8EFDB, 0xFFB4C58C, '🦕'),
+  'meyve-sebze': (0xFFFFF2DF, 0xFFB9DB8E, '🍓'),
+};
+
+class KidPlaymat extends StatelessWidget {
+  final String kind;
+  final Widget child;
+  const KidPlaymat({super.key, required this.kind, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = kKidThemes[kind];
+    if (t == null) return child;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(t.$1), Color(t.$2)]),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.55), width: 2),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(children: [
+        Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _MotifPainter(t.$3)))),
+        child,
+      ]),
+    );
+  }
+}
+
+/// Silik, çapraz dizili motif (dokunuşa kapalı).
+class _MotifPainter extends CustomPainter {
+  final String motif;
+  _MotifPainter(this.motif);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final tp = TextPainter(text: TextSpan(text: motif, style: const TextStyle(fontSize: 26)), textDirection: TextDirection.ltr)..layout();
+    const step = 74.0;
+    final paint = Paint()..color = const Color(0x1F000000);
+    canvas.saveLayer(Offset.zero & size, paint);
+    var row = 0;
+    for (var y = 8.0; y < size.height; y += step * 0.8, row++) {
+      for (var x = (row.isOdd ? step / 2 : 0.0) + 8; x < size.width; x += step) {
+        canvas.save();
+        canvas.translate(x, y);
+        canvas.rotate(row.isOdd ? 0.2 : -0.2);
+        tp.paint(canvas, Offset(-tp.width / 2, -tp.height / 2));
+        canvas.restore();
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _MotifPainter old) => old.motif != motif;
 }

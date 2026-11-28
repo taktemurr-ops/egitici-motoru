@@ -117,6 +117,9 @@ class EPlay {
 
   String get lang => ctx.lang;
 
+  /// Tür kimliği (ör. 'hayvanlar'); oyun alanının görsel teması için.
+  String get kind => (ctx.generated.puzzle as ELevel).kind;
+
   bool get rtl => const ['ar', 'fa', 'he', 'ur'].contains(ctx.lang);
 
   void sfx(Sfx s) => ctx.sfx(s);
