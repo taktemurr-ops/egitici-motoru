@@ -10,13 +10,13 @@ const Map<String, String> kPicEmoji = {
   'j.scientist': '🧑‍🔬', 'j.builder': '👷', 'j.singer': '🧑‍🎤', 'j.coder': '🧑‍💻',
   // vücut
   'v.eye': '👁️', 'v.ear': '👂', 'v.nose': '👃', 'v.mouth': '👄', 'v.tongue': '👅', 'v.hand': '✋', 'v.foot': '🦶',
-  'v.leg': '🦵', 'v.arm': '💪', 'v.teeth': '🦷', 'v.brain': '🧠', 'v.heart': '🫀', 'v.lungs': '🫁', 'v.bone': '🦴',
+  'v.leg': '🦵', 'v.arm': '💪', 'v.teeth': '🦷', 'v.brain': '🧠', 'v.heart': '❤️', 'v.lungs': '🫁', 'v.bone': '🦴',
   // meyve ve sebzeler
   'f.apple': '🍎', 'f.banana': '🍌', 'f.grapes': '🍇', 'f.strawberry': '🍓', 'f.orange': '🍊', 'f.watermelon': '🍉',
   'f.pear': '🍐', 'f.cherry': '🍒', 'f.lemon': '🍋', 'g.peach': '🍑', 'g.pineapple': '🍍', 'g.kiwi': '🥝',
-  'g.blueberry': '🫐', 'g.coconut': '🥥', 'g.mango': '🥭', 'f.carrot': '🥕', 'f.corn': '🌽', 'g.broccoli': '🥦',
-  'g.potato': '🥔', 'g.eggplant': '🍆', 'g.cucumber': '🥒', 'g.pepper': '🫑', 'g.onion': '🧅', 'g.garlic': '🧄',
-  'g.lettuce': '🥬', 'g.peas': '🫛', 'g.fruit': '🍎🍌🍇', 'g.veg': '🥕🥦🌽',
+  'g.coconut': '🥥', 'g.mango': '🥭', 'f.carrot': '🥕', 'f.corn': '🌽', 'g.broccoli': '🥦',
+  'g.potato': '🥔', 'g.eggplant': '🍆', 'g.cucumber': '🥒', 'g.pepper': '🌶️', 'g.onion': '🧅', 'g.garlic': '🧄',
+  'g.lettuce': '🥬', 'g.fruit': '🍎🍌🍇', 'g.veg': '🥕🥦🌽',
 };
 
 /// Ten rengi değiştiricisini ilk karakterden sonra ekler ([t] 1..5; 0 = yok).
@@ -39,13 +39,13 @@ class Job {
 const List<Job> kJobs = [
   Job('j.doctor', ['🩺', '💉', '🩹'], ['🏥']),
   Job('j.teacher', ['📚', '✏️', '📓'], ['🏫']),
-  Job('j.firefighter', ['🧯', '🚒', '🪜'], ['🔥']),
+  Job('j.firefighter', ['🧯', '🚒'], ['🔥']),
   Job('j.police', ['🚓', '🚨'], ['🚦']),
   Job('j.cook', ['🍳', '🥄', '🧂'], ['🍽️']),
   Job('j.farmer', ['🚜', '🧺'], ['🌾', '🐄']),
   Job('j.pilot', ['✈️'], ['☁️']),
   Job('j.astronaut', ['🚀', '🛰️'], ['🌕', '🪐']),
-  Job('j.mechanic', ['🔧', '🔩', '🪛'], ['🚙']),
+  Job('j.mechanic', ['🔧', '🔩'], ['🚙']),
   Job('j.artist', ['🎨', '🖌️'], ['🖼️']),
   Job('j.scientist', ['🔬', '🧲'], ['🧪']),
   Job('j.builder', ['🧱', '🦺'], ['🏗️']),
@@ -70,7 +70,7 @@ const List<List<String>> kSenseThings = [
   ['🎵', '🔔', '🥁', '📢'],
   ['🌸', '🌹', '💐', '🦨'],
   ['🍋', '🍭', '🍯', '🧂'],
-  ['🧸', '🧊', '🌵', '🪶'],
+  ['🧸', '🧊', '🌵', '🧶'],
 ];
 
 /// Organ → yaptığı iş (resimle). Anahtar [kBodyKeys] sırası.
@@ -82,7 +82,7 @@ const Map<int, List<String>> kBodyJobs = {
   10: ['💭', '🧩'], // beyin: düşünmek
   11: ['💓'], // kalp: atar
   12: ['🌬️'], // akciğer: nefes
-  13: ['🩻'], // kemik: iskelet
+  13: ['🧍'], // kemik: dik durmak (iskelet)
 };
 
 /// Anlamca birbirine çok yakın organ çiftleri (aynı soruda yan yana çıkmaz).
@@ -147,7 +147,6 @@ const List<Produce> kProduce = [
   Produce('g.peach', true, -1, 0),
   Produce('g.pineapple', true, -1, 2),
   Produce('g.kiwi', true, -1, 2),
-  Produce('g.blueberry', true, 4, 2),
   Produce('g.coconut', true, 7, 0),
   Produce('g.mango', true, -1, 0),
   Produce('f.carrot', false, 1, 1),
@@ -156,11 +155,10 @@ const List<Produce> kProduce = [
   Produce('g.potato', false, 7, 1),
   Produce('g.eggplant', false, 5, 2),
   Produce('g.cucumber', false, 3, 2),
-  Produce('g.pepper', false, 3, 2),
+  Produce('g.pepper', false, 0, 2),
   Produce('g.onion', false, -1, 1),
   Produce('g.garlic', false, 9, 1),
   Produce('g.lettuce', false, 3, 2),
-  Produce('g.peas', false, 3, 2),
 ];
 
 int produceOf(String key) => kProduce.indexWhere((p) => p.key == key);

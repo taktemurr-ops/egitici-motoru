@@ -20,7 +20,7 @@ const List<(String, int, List<String>, List<String>)> kToyScenes = [
   ('oeHome', 0xFFF7E3C9, ['🛏️', '🍽️', '🛁', '🛋️', '📚', '🧺'], ['🧸', '🍎', '🧼', '📕', '☕', '⚽', '🐱', '🧦']),
   ('oeSchool', 0xFFDDEBF7, ['🪑', '🎒', '🗄️', '🖍️', '🧑‍🏫', '📋'], ['✏️', '📒', '🍏', '📐', '🧃', '🎨', '🔤', '🧮']),
   ('oeMarket', 0xFFE6F2DA, ['🛒', '🧺', '🏷️', '🧾', '🥫', '🧑‍🌾'], ['🥕', '🍞', '🥚', '🧀', '🍌', '🥛', '🍅', '🍪']),
-  ('oePark', 0xFFD8F0D2, ['🌳', '🪁', '🛝', '🪣', '⛲', '🪨'], ['🐶', '🦆', '🎈', '🏐', '🪀', '🌼', '🍦', '🐿️']),
+  ('oePark', 0xFFD8F0D2, ['🌳', '🪁', '🎠', '🌷', '⛲', '🌻'], ['🐶', '🦆', '🎈', '🏐', '🪀', '🌼', '🍦', '🐿️']),
 ];
 
 class ToyPuzzle extends EPuzzle {
@@ -189,7 +189,7 @@ const List<(String, String)> kVetAnimals = [
 ];
 
 /// Bakım aletleri: 0 yıka, 1 tara, 2 besle, 3 su ver, 4 bant, 5 dinle, 6 sarıl.
-const List<String> kVetTools = ['🫧', '🪮', '🍽️', '💧', '🩹', '🩺', '🤗'];
+const List<String> kVetTools = ['🧼', '🖌️', '🍽️', '💧', '🩹', '🩺', '🤗'];
 const List<String> kVetToolKeys = ['vtWash', 'vtBrush', 'vtFeed', 'vtWater', 'vtBandage', 'vtListen', 'vtCuddle'];
 
 class VetPuzzle extends EPuzzle {
@@ -345,7 +345,7 @@ const List<(String, List<String>, List<String>)> kTales = [
   ('mt0', ['mt0a', 'mt0b', 'mt0c', 'mt0d'], ['🐢🐇', '🐇💨🌳', '🐇😴 🐢🚶', '🐢🏁🎉']),
   ('mt1', ['mt1a', 'mt1b', 'mt1c', 'mt1d'], ['🦁😴🐭', '🦁✋🐭', '🦁🕸️', '🐭✂️🕸️🦁']),
   ('mt2', ['mt2a', 'mt2b', 'mt2c', 'mt2d'], ['🐜🌾☀️', '🦗🎻☀️', '❄️🦗😢', '🐜🍞🦗🤝']),
-  ('mt3', ['mt3a', 'mt3b', 'mt3c', 'mt3d'], ['🐦🏺💧', '🐦🤔', '🐦🪨🏺', '🐦💧😊']),
+  ('mt3', ['mt3a', 'mt3b', 'mt3c', 'mt3d'], ['🐦🏺💧', '🐦🤔', '🐦⚫🏺', '🐦💧😊']),
 ];
 
 class TalePuzzle extends EPuzzle {
@@ -577,7 +577,7 @@ class _TaleViewState extends State<_TaleView> with Clock<_TaleView> {
 
 /// Araçlar: emoji. Aletler: 0 sünger, 1 su, 2 anahtar, 3 tekerlek, 4 çekiç, 5 boya.
 const List<String> kCars = ['🚗', '🚙', '🚌', '🚜', '🚚', '🏎️', '🚒', '🚑'];
-const List<String> kCarTools = ['🧽', '🚿', '🔧', '🛞', '🔨', '🖌️'];
+const List<String> kCarTools = ['🧽', '🚿', '🔧', '⚫', '🔨', '🖌️'];
 const List<String> kCarToolKeys = ['atSponge', 'atRinse', 'atWrench', 'atTire', 'atHammer', 'atPaint'];
 const List<int> kCarPaints = [0xFFE4572E, 0xFF3F6FD8, 0xFF2F8F6B, 0xFFF2A516, 0xFF8E44AD];
 
@@ -704,7 +704,7 @@ class _CarViewState extends State<_CarView> with Clock<_CarView> {
               ),
             ),
             if (dirty) const Positioned(top: 30, left: 40, child: Text('🟤 🟤', style: TextStyle(fontSize: 26))),
-            if (scrub > 0) Positioned(top: 20, right: 40, child: Text('🫧' * scrub, style: const TextStyle(fontSize: 30))),
+            if (scrub > 0) Positioned(top: 20, right: 40, child: Text('💦' * scrub, style: const TextStyle(fontSize: 30))),
             Positioned(
               bottom: 12,
               child: Container(

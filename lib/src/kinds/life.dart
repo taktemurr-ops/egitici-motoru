@@ -19,12 +19,12 @@ const List<String> kTipKeys = ['tip.happy', 'tip.sad', 'tip.angry', 'tip.scared'
 
 /// Her duygu için resimli küçük olaylar (okuma bilmeyen çocuklar için yalnız simge).
 const List<List<String>> kFeelScenes = [
-  ['🎂🎁', '🎈🎉', '🐶🤗', '🏖️🪣', '🍦☀️'],
-  ['🎈💨😮‍💨', '🧸💔', '🌧️⚽🚫', '🍦⬇️💥'],
+  ['🎂🎁', '🎈🎉', '🐶🤗', '🏖️🏐', '🍦☀️'],
+  ['🎈💨☁️', '🧸💔', '🌧️⚽🚫', '🍦⬇️💥'],
   ['🏰👟💥', '🧩🙅', '✏️✂️💥'],
   ['⛈️⚡', '🌑🔦', '🕷️🕸️', '🐺🌲🌙'],
   ['🎁❓', '🐣🥚', '🎆✨', '🦋👃'],
-  ['🌙📖', '🛁🫧', '🌳🍃', '🎨🖌️', '🐟🫧'],
+  ['🌙📖', '🛁🧼', '🌳🍃', '🎨🖌️', '🐠🌊'],
 ];
 
 /// Birbirine çok yakın, aynı soruda yan yana çıkmaması gereken duygular.
@@ -110,11 +110,11 @@ const List<(List<String>, List<String>)> kOpposites = [
   (['🐘', '🌳'], ['🐭', '🌱']), // büyük – küçük
   (['🔥', '☕'], ['🧊', '⛄']), // sıcak – soğuk
   (['🐇', '🚀'], ['🐢', '🐌']), // hızlı – yavaş
-  (['🔋'], ['🪫']), // dolu – boş
+  (['🍲'], ['🍽️']), // dolu – boş
   (['🔓', '📖'], ['🔒', '📕']), // açık – kapalı
   (['🌞', '🏙️'], ['🌜', '🌃']), // gündüz – gece
   (['⬆️'], ['⬇️']), // yukarı – aşağı
-  (['🪨', '⚓'], ['🪶', '🫧']), // ağır – hafif
+  (['🏋️', '⚓'], ['🎈', '🍃']), // ağır – hafif
   (['🌧️', '💦'], ['🏜️', '🌵']), // ıslak – kuru
   (['📢', '🥁'], ['🤫', '🔇']), // gürültülü – sessiz
   (['😀'], ['😢']), // mutlu – üzgün
@@ -218,7 +218,7 @@ class YonKind extends QuizKind {
 /// Günlük sıralar (sıra önemli).
 const List<List<String>> kRoutines = [
   ['⏰', '🪥', '🧼', '🥣', '🎒'], // sabah: uyan, diş, el, kahvaltı, okul
-  ['💧', '🧼', '🫧', '🧻'], // el yıkama: ıslat, sabun, köpürt, kurula
+  ['💧', '🧼', '👐', '🧻'], // el yıkama: ıslat, sabun, köpürt, kurula
   ['🛁', '🪥', '📖', '😴'], // akşam: banyo, diş, masal, uyku
   ['🧺', '👕', '🧦', '👟'], // giyinme: dolap, tişört, çorap, ayakkabı
 ];
@@ -232,7 +232,7 @@ const List<(String, String, List<String>)> kChoices = [
   ('☀️🏖️', '🧢', ['🧤', '🧣', '🧥']),
   ('🍬🦷', '🪥', ['🍫', '📺', '🍭']),
   ('🚴', '⛑️', ['👒', '🎩', '🎀']),
-  ('🥶❄️', '🧣', ['🩳', '🍦', '🩴']),
+  ('🥶❄️', '🧣', ['🩳', '🍦', '🏖️']),
   ('🚽', '🧼', ['📱', '🍪', '🎮']),
   ('📺⏳', '🌳⚽', ['📺', '📱', '🎮']),
 ];
@@ -303,13 +303,13 @@ class SaglikKind extends QuizKind {
 /// Kutular: 0 kâğıt, 1 plastik, 2 cam, 3 metal, 4 organik.
 const List<List<String>> kWaste = [
   ['📰', '📦', '📄', '✉️', '🗞️'],
-  ['🧴', '🥤', '🪣'],
-  ['🫙', '🥛'],
+  ['🧴', '🥤', '🛍️'],
+  ['🧪', '🥛'],
   ['🥫', '🔩', '📎', '🔧'],
   ['🍌', '🍎', '🥕', '🍂', '🥚', '🍞'],
 ];
 const List<Color> kBinColors = [Color(0xFF3A86C8), Color(0xFFF2C14E), Color(0xFF5BAA6E), Color(0xFF8D99AE), Color(0xFF8D6748)];
-const List<String> kBinIcons = ['📄', '🧴', '🫙', '🥫', '🍂'];
+const List<String> kBinIcons = ['📄', '🧴', '🥛', '🥫', '🍂'];
 
 int wasteBin(String e) {
   for (var i = 0; i < kWaste.length; i++) {
