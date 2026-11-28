@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -9,6 +10,7 @@ import '../core.dart';
 import '../data/words.dart';
 import '../kid/vis.dart';
 import '../texts.dart';
+import 'strokes.dart';
 
 // ---------------------------------------------------------------- harf izleme
 
@@ -66,8 +68,15 @@ class _TraceView extends StatefulWidget {
   State<_TraceView> createState() => _TraceViewState();
 }
 
-class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
+class _TraceViewState extends State<_TraceView> with Clock<_TraceView>, SingleTickerProviderStateMixin {
   int idx = 0;
+  /// Çizgi sırası rehberi: harfin kutusuna oturtulmuş çizgiler (verisi
+  /// olmayan harflerde null; o zaman yalnız [_start] başlangıç noktası).
+  List<List<Offset>>? _guide;
+  Offset? _start;
+  late final AnimationController _demo = AnimationController(vsync: this)..addListener(() => setState(() {}));
+  Timer? _idleT;
+  int _idle = 0;
   int clears = 0;
   Set<int>? mask;
   final Set<int> painted = {};
@@ -89,6 +98,24 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
     startClock();
     _buildMask();
     later(450, _sayGlyph);
+    // Uzun süre dokunulmazsa çizgi sırası yeniden gösterilir.
+    _idleT = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || ended || _demo.isAnimating) return;
+      if (++_idle >= 8) _showDemo();
+    });
+  }
+
+  void _showDemo() {
+    _idle = 0;
+    final g = _guide;
+    if (g == null || g.isEmpty || ended) return;
+    _demo.duration = Duration(milliseconds: 950 * g.length);
+    _demo.forward(from: 0);
+  }
+
+  void _hear() {
+    _sayGlyph();
+    _showDemo();
   }
 
   /// Kendi alfabesinin harfi/rakamı okunur (başka yazılarda okunuş belirsiz).
@@ -98,6 +125,8 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
 
   @override
   void dispose() {
+    _idleT?.cancel();
+    _demo.dispose();
     widget.play.hush();
     super.dispose();
   }
@@ -110,6 +139,10 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
   Future<void> _buildMask() async {
     final job = ++_job;
     mask = null;
+    _guide = null;
+    _start = null;
+    _demo.stop();
+    _demo.value = 0;
     if (job > 1) setState(() {});
     try {
       final rec = ui.PictureRecorder();
@@ -128,12 +161,51 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
           if (a > 100) m.add(gy * _g + gx);
         }
       }
-      if (mounted && job == _job) setState(() => mask = m);
+      // Harfin gerçek kutusu (çizgileri yazı tipinden bağımsız oturtmak için).
+      final sw = _side.toInt();
+      var l = sw, t = sw, r = -1, b = -1;
+      for (var y = 0; y < sw; y++) {
+        for (var x = 0; x < sw; x++) {
+          if (data.getUint8((y * sw + x) * 4 + 3) > 100) {
+            if (x < l) l = x;
+            if (x > r) r = x;
+            if (y < t) t = y;
+            if (y > b) b = y;
+          }
+        }
+      }
+      List<List<Offset>>? guide;
+      Offset? start;
+      final raw = strokesFor(glyph);
+      if (raw != null && r >= l && b >= t) {
+        guide = fitStrokes(raw, Rect.fromLTRB(l.toDouble(), t.toDouble(), r + 1.0, b + 1.0));
+      }
+      if (guide == null && m.isNotEmpty) {
+        // Verisi olmayan harf: yazının yönüne göre en üst satırın ilk hücresi.
+        final rtlScript = glyph.runes.any((c) => c >= 0x0590 && c <= 0x08FF);
+        final top = m.reduce(math.min) ~/ _g;
+        final row = m.where((i) => i ~/ _g == top);
+        final cell = rtlScript ? row.reduce(math.max) : row.reduce(math.min);
+        start = Offset((cell % _g + 0.5) * step, (cell ~/ _g + 0.5) * step);
+      }
+      if (mounted && job == _job) {
+        setState(() {
+          mask = m;
+          _guide = guide;
+          _start = start;
+        });
+        later(500, _showDemo);
+      }
     } catch (_) {}
   }
 
   void _add(Offset o) {
     if (ended) return;
+    _idle = 0;
+    if (_demo.isAnimating) {
+      _demo.stop();
+      _demo.value = 0;
+    }
     strokes.last.add(o);
     final step = _side / _g;
     const rad = 13.0;
@@ -184,6 +256,97 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
     });
   }
 
+  /// Çizginin örnek noktalarının en az %70'i boyandıysa çizgi tamamdır.
+  bool _strokeDone(List<Offset> s) {
+    final pts = samplePath(s, step: 5);
+    if (pts.isEmpty) return true;
+    final step = _side / _g;
+    var hit = 0;
+    for (final p in pts) {
+      final gx = clampI((p.dx / step).floor(), 0, _g - 1), gy = clampI((p.dy / step).floor(), 0, _g - 1);
+      if (painted.contains(gy * _g + gx)) hit++;
+    }
+    return hit / pts.length >= 0.7;
+  }
+
+  void _num(Canvas c, Offset at, int n, Color bg, {double r = 9}) {
+    c.drawCircle(at, r + 2, fill(Colors.white));
+    c.drawCircle(at, r, fill(bg));
+    final tp = TextPainter(
+      text: TextSpan(text: numL(n, widget.play.lang), style: TextStyle(fontSize: r * 1.25, fontWeight: FontWeight.w900, color: Colors.white, height: 1.0)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(c, at - Offset(tp.width / 2, tp.height / 2));
+  }
+
+  void _arrow(Canvas c, Offset tip, Offset dir, Color col) {
+    final n = Offset(-dir.dy, dir.dx);
+    final p = Path()
+      ..moveTo(tip.dx + dir.dx * 4, tip.dy + dir.dy * 4)
+      ..lineTo(tip.dx - dir.dx * 7 + n.dx * 6, tip.dy - dir.dy * 7 + n.dy * 6)
+      ..lineTo(tip.dx - dir.dx * 7 - n.dx * 6, tip.dy - dir.dy * 7 - n.dy * 6)
+      ..close();
+    c.drawPath(p, fill(col));
+  }
+
+  /// Çizgi sırası rehberi: sıradaki çizgi noktalı yol + ok + numaralı
+  /// başlangıç noktası; diğer bitmemiş çizgilerin yalnız numarası.
+  void _paintGuide(Canvas c) {
+    const go = Color(0xFF1E9E57), path = Color(0xFFE8890C);
+    final g = _guide;
+    if (g == null) {
+      final s = _start;
+      if (s != null && painted.isEmpty) {
+        c.drawCircle(s, 11, fill(Colors.white));
+        c.drawCircle(s, 9, fill(go));
+        c.drawCircle(s, 3.5, fill(Colors.white));
+      }
+      return;
+    }
+    if (_demo.isAnimating) {
+      // Gösterim: parmak çizgileri sırayla izler.
+      final f = _demo.value * g.length;
+      final k = clampI(f.floor(), 0, g.length - 1);
+      for (var j = 0; j <= k; j++) {
+        final s = g[j];
+        final part = j < k ? 1.0 : clampD(f - k, 0, 1);
+        final pts = samplePath(s, step: 3);
+        final upto = clampI((pts.length * part).round(), 1, pts.length);
+        final pp = Path()..moveTo(pts.first.dx, pts.first.dy);
+        for (final o in pts.take(upto).skip(1)) {
+          pp.lineTo(o.dx, o.dy);
+        }
+        c.drawPath(pp, stroke(path.withValues(alpha: 0.75), 7));
+        if (j == k) {
+          final (at, _) = pointAlong(s, part);
+          c.drawCircle(at, 13, fill(path.withValues(alpha: 0.30)));
+          c.drawCircle(at, 7, fill(path));
+        }
+      }
+      for (var j = 0; j < g.length; j++) {
+        _num(c, g[j].first, j + 1, go, r: 7);
+      }
+      return;
+    }
+    final done = [for (final s in g) _strokeDone(s)];
+    final next = done.indexOf(false);
+    if (next < 0) return;
+    for (var j = g.length - 1; j >= 0; j--) {
+      if (done[j] || j == next) continue;
+      _num(c, g[j].first, j + 1, go.withValues(alpha: 0.45), r: 7);
+    }
+    final s = g[next];
+    final pts = samplePath(s, step: 7);
+    for (final o in pts.skip(1).take(math.max(0, pts.length - 2))) {
+      c.drawCircle(o, 2.4, fill(path));
+    }
+    if (s.length >= 2) {
+      final (tip, dir) = pointAlong(s, 1.0);
+      _arrow(c, tip, dir, path);
+    }
+    _num(c, s.first, next + 1, go);
+  }
+
   void _paint(Canvas c) {
     c.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(0, 0, _side, _side), const Radius.circular(18)), fill(Colors.white));
     final tp = _tp(const Color(0xFFE4DED2));
@@ -197,6 +360,7 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
         }
       }
     }
+    _paintGuide(c);
     for (final s in strokes) {
       if (s.length < 2) {
         if (s.isNotEmpty) c.drawCircle(s.first, 7, fill(const Color(0xFF4F86C6)));
@@ -226,7 +390,7 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
         child: Row(children: [
           if (widget.glyphAt == null)
-            IconButton(tooltip: et(widget.play.lang, 'hear'), onPressed: _sayGlyph, icon: const Icon(Icons.volume_up_rounded, size: 30)),
+            IconButton(tooltip: et(widget.play.lang, 'hear'), onPressed: _hear, icon: const Icon(Icons.volume_up_rounded, size: 30)),
           Expanded(child: LinearProgressIndicator(value: clampD(cover / 0.7, 0, 1), minHeight: 10, borderRadius: BorderRadius.circular(5))),
           IconButton(tooltip: et(widget.play.lang, 'clear'), onPressed: _clear, icon: const Icon(Icons.cleaning_services_outlined, size: 30)),
         ]),
