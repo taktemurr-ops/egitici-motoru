@@ -64,7 +64,12 @@ void main() {
     final q = tester.widgetList<Text>(find.byType(Text)).map((t) => t.data ?? '').firstWhere((s) => s.contains('×'));
     final m = RegExp(r'(\d+) × (\d+)').firstMatch(q)!;
     final answer = int.parse(m.group(1)!) * int.parse(m.group(2)!);
-    await tester.tap(find.widgetWithText(OutlinedButton, '$answer'));
+    // Sonuç tuş takımıyla yazılır ve onaylanır.
+    for (final d in '$answer'.split('')) {
+      await tester.tap(find.widgetWithText(OutlinedButton, d));
+      await tester.pump();
+    }
+    await tester.tap(find.widgetWithIcon(OutlinedButton, Icons.check_rounded));
     await settle(tester);
     expect(find.byType(TabBar), findsOneWidget);
     expectReadable(tester, where: 'ebeveyn raporu');

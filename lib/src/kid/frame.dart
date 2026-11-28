@@ -277,11 +277,13 @@ class _GateDialogState extends State<_GateDialog> {
   @override
   Widget build(BuildContext context) {
     final look = StudioLook.of(context);
+    // Yatay telefonda (alçak ekran) soru solda, tuş takımı sağda: kaydırmadan sığar.
+    final land = MediaQuery.sizeOf(context).height < 520;
     Widget key(String k, {IconData? icon, VoidCallback? onTap}) => Padding(
           padding: const EdgeInsets.all(4),
           child: SizedBox(
             width: 64,
-            height: 52,
+            height: land ? 44 : 52,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
               onPressed: onTap ?? () => _key(k),
@@ -289,36 +291,43 @@ class _GateDialogState extends State<_GateDialog> {
             ),
           ),
         );
-    return AlertDialog(
-      icon: const Icon(Icons.lock_outline),
-      title: Text(et(widget.lang, 'askGrownup')),
-      content: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(et(widget.lang, 'grownupQ'), textAlign: TextAlign.center),
-          const SizedBox(height: 10),
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text('${widget.a} × ${widget.b} = ${typed.isEmpty ? '?' : typed}',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: wrong ? StudioLook.bad : look.number)),
-          ),
-          const SizedBox(height: 10),
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              for (final row in const [
-                ['1', '2', '3'],
-                ['4', '5', '6'],
-                ['7', '8', '9'],
-              ])
-                Row(mainAxisSize: MainAxisSize.min, children: [for (final k in row) key(k)]),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                key('<', icon: Icons.backspace_outlined),
-                key('0'),
-                key('=', icon: Icons.check_rounded, onTap: _submit),
-              ]),
-            ]),
-          ),
+    final ask = Column(mainAxisSize: MainAxisSize.min, children: [
+      Text(et(widget.lang, 'grownupQ'), textAlign: TextAlign.center),
+      const SizedBox(height: 10),
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Text('${widget.a} × ${widget.b} = ${typed.isEmpty ? '?' : typed}',
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: wrong ? StudioLook.bad : look.number)),
+      ),
+    ]);
+    final pad = Directionality(
+      textDirection: TextDirection.ltr,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        for (final row in const [
+          ['1', '2', '3'],
+          ['4', '5', '6'],
+          ['7', '8', '9'],
+        ])
+          Row(mainAxisSize: MainAxisSize.min, children: [for (final k in row) key(k)]),
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          key('<', icon: Icons.backspace_outlined),
+          key('0'),
+          key('=', icon: Icons.check_rounded, onTap: _submit),
         ]),
+      ]),
+    );
+    return AlertDialog(
+      icon: land ? null : const Icon(Icons.lock_outline),
+      title: Text(et(widget.lang, 'askGrownup')),
+      insetPadding: land ? const EdgeInsets.symmetric(horizontal: 24, vertical: 8) : null,
+      content: SingleChildScrollView(
+        child: land
+            ? Row(mainAxisSize: MainAxisSize.min, children: [
+                ConstrainedBox(constraints: const BoxConstraints(maxWidth: 260), child: ask),
+                const SizedBox(width: 16),
+                pad,
+              ])
+            : Column(mainAxisSize: MainAxisSize.min, children: [ask, const SizedBox(height: 10), pad]),
       ),
       actions: [TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(et(widget.lang, 'cancel')))],
     );

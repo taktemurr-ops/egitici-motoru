@@ -419,7 +419,7 @@ class _PixViewState extends State<_PixView> with Clock<_PixView> {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: used[i] == 8 || used[i] == 4 || used[i] == 5 || used[i] == 7 ? Colors.white : KColors.ink,
+                      color: _onSwatch(Color(kArtPalette[used[i]])),
                     )),
               ),
             ),
@@ -427,4 +427,15 @@ class _PixViewState extends State<_PixView> with Clock<_PixView> {
       ),
     ]);
   }
+}
+
+/// Boya kutusundaki numara: beyaz ya da koyu mürekkepten hangisi daha
+/// okunaklıysa (WCAG kontrast oranı).
+Color _onSwatch(Color bg) {
+  final l = bg.computeLuminance();
+  double ratio(Color c) {
+    final m = c.computeLuminance();
+    return (math.max(l, m) + 0.05) / (math.min(l, m) + 0.05);
+  }
+  return ratio(Colors.white) >= ratio(KColors.ink) ? Colors.white : KColors.ink;
 }
