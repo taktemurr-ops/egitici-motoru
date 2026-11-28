@@ -560,3 +560,24 @@ class _MotifPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _MotifPainter old) => old.motif != motif;
 }
+
+class _RaceTrack extends StatelessWidget {
+  final int me;
+  final int rival;
+  final int total;
+  const _RaceTrack({required this.me, required this.rival, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, box) {
+      final w = box.maxWidth - 60;
+      double x(int v) => 10 + w * clampD(v / total, 0, 1);
+      return Stack(children: [
+        Positioned(left: 10, right: 10, top: 22, child: Container(height: 10, decoration: BoxDecoration(color: KColors.soft, borderRadius: BorderRadius.circular(5)))),
+        const Positioned(right: 6, top: 6, child: Text('🏁', style: TextStyle(fontSize: 28))),
+        AnimatedPositioned(duration: const Duration(milliseconds: 500), left: x(rival), top: 0, child: const Opacity(opacity: 0.6, child: Text('🐢', style: TextStyle(fontSize: 26)))),
+        AnimatedPositioned(duration: const Duration(milliseconds: 500), left: x(me), top: 20, child: const Text('🚗', style: TextStyle(fontSize: 28))),
+      ]);
+    });
+  }
+}

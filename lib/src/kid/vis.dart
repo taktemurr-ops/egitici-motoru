@@ -514,7 +514,7 @@ String? visName(Vis v, String lang) {
         return t != null && t.$2 == lang ? t.$1 : null;
       }
   }
-  return s == null || s.trim().isEmpty ? null : s;
+  return s.trim().isEmpty ? null : s;
 }
 
 class _VisPainter extends CustomPainter {
