@@ -88,6 +88,18 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
     super.initState();
     startClock();
     _buildMask();
+    later(450, _sayGlyph);
+  }
+
+  /// Kendi alfabesinin harfi/rakamı okunur (başka yazılarda okunuş belirsiz).
+  void _sayGlyph() {
+    if (widget.glyphAt == null) widget.play.say(glyph);
+  }
+
+  @override
+  void dispose() {
+    widget.play.hush();
+    super.dispose();
   }
 
   TextPainter _tp(Color c) => TextPainter(
@@ -145,8 +157,9 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
     if (cover >= 0.7 && outside <= 0.55) {
       widget.play.sfx(Sfx.clear);
       widget.play.answer(true);
+      widget.play.say(et(widget.play.lang, 'praise${(idx % 3) + 1}'));
       ended = idx + 1 >= widget.p.items.length;
-      later(600, () {
+      later(900, () {
         if (idx + 1 >= widget.p.items.length) {
           widget.play.finish(mistakes: clears, seconds: seconds);
           return;
@@ -157,6 +170,7 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
           strokes.clear();
         });
         _buildMask();
+        later(350, _sayGlyph);
       });
     }
   }
@@ -211,6 +225,8 @@ class _TraceViewState extends State<_TraceView> with Clock<_TraceView> {
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
         child: Row(children: [
+          if (widget.glyphAt == null)
+            IconButton(tooltip: et(widget.play.lang, 'hear'), onPressed: _sayGlyph, icon: const Icon(Icons.volume_up_rounded, size: 30)),
           Expanded(child: LinearProgressIndicator(value: clampD(cover / 0.7, 0, 1), minHeight: 10, borderRadius: BorderRadius.circular(5))),
           IconButton(tooltip: et(widget.play.lang, 'clear'), onPressed: _clear, icon: const Icon(Icons.cleaning_services_outlined, size: 30)),
         ]),
@@ -305,6 +321,18 @@ class _SyllViewState extends State<_SyllView> with Clock<_SyllView> {
     r.shuffle(tiles);
     used.clear();
     placed = 0;
+    // Sözcük önce bütün olarak okunur; çocuk heceleri duyarak kurar.
+    later(450, _sayWord);
+  }
+
+  String get _word => nm(kWordKeys[widget.p.words[idx]], widget.play.lang);
+
+  void _sayWord() => widget.play.say(_word);
+
+  @override
+  void dispose() {
+    widget.play.hush();
+    super.dispose();
   }
 
   void _tap(int i) {
@@ -313,6 +341,12 @@ class _SyllViewState extends State<_SyllView> with Clock<_SyllView> {
     if (tiles[i].$1 == want) {
       widget.play.sfx(Sfx.place);
       widget.play.answer(true);
+      // Hece okunur; son hecede sözcüğün tamamı.
+      if (placed + 1 >= parts.length) {
+        widget.play.say(_word);
+      } else {
+        widget.play.say(want);
+      }
       setState(() {
         used.add(i);
         placed++;
@@ -320,7 +354,7 @@ class _SyllViewState extends State<_SyllView> with Clock<_SyllView> {
       });
       if (placed >= parts.length) {
         widget.play.sfx(Sfx.clear);
-        later(900, () {
+        later(1300, () {
           if (idx + 1 >= widget.p.words.length) {
             ended = true;
             widget.play.finish(mistakes: mistakes, seconds: seconds);
@@ -348,7 +382,11 @@ class _SyllViewState extends State<_SyllView> with Clock<_SyllView> {
     return Column(children: [
       Padding(padding: const EdgeInsets.only(top: 4), child: StepDots(done: idx, total: widget.p.words.length)),
       const SizedBox(height: 8),
-      Text(kWordEmoji[w], style: const TextStyle(fontSize: 96)),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text(kWordEmoji[w], style: const TextStyle(fontSize: 96)),
+        const SizedBox(width: 10),
+        BigButton(size: 56, color: KColors.accent, tooltip: et(widget.play.lang, 'hear'), onTap: _sayWord, child: const Icon(Icons.volume_up_rounded, size: 30)),
+      ]),
       const SizedBox(height: 8),
       Directionality(
         textDirection: widget.play.rtl ? TextDirection.rtl : TextDirection.ltr,

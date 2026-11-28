@@ -177,6 +177,9 @@ class ReadAloud {
     }
   }
 
+  /// Kısa bir sözü (soru, ad, övgü) okur; bitişini beklemez. Ses yoksa `false`.
+  Future<bool> say(String text, String lang) => speak(text, lang, onWord: (_) {}, onDone: () {});
+
   Future<void> stop() async {
     _token++;
     _onWord = null;

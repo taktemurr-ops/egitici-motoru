@@ -162,6 +162,11 @@ class KidStore {
     _setI('eg.bonus', bonusMinutes + m);
   }
 
+  /// Sesli yönergeler (soruların, adların ve övgünün çevrimdışı sistem
+  /// sesiyle okunması). Varsayılan açık; ebeveyn alanından kapatılır.
+  bool get voiceOn => _i('eg.voice', 1) == 1;
+  set voiceOn(bool v) => _setI('eg.voice', v ? 1 : 0);
+
   bool get bedtimeOn => _i('eg.bed', 0) == 1;
   set bedtimeOn(bool v) => _setI('eg.bed', v ? 1 : 0);
   int get bedFrom => _i('eg.bedFrom', 20);

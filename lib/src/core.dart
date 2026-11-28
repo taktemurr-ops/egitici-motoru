@@ -12,6 +12,7 @@ import 'package:studio_core/core/stats.dart';
 import 'package:studio_core/core/strings.dart';
 
 import 'kid/frame.dart';
+import 'kid/read_aloud.dart';
 import 'kid/store.dart';
 import 'studio_chrome.dart';
 
@@ -116,6 +117,16 @@ class EPlay {
   void sfx(Sfx s) => ctx.sfx(s);
 
   void sound(String name) => ctx.sound(name);
+
+  /// Sesli yönerge: ebeveyn kapatmadıysa [text] cihazın çevrimdışı sistem
+  /// sesiyle okunur ([inLang] verilmezse arayüz dili). Okuma bilmeyen çocuk
+  /// soruyu, adları ve övgüyü dinler; ses yoksa sessizce geçilir.
+  void say(String text, [String? inLang]) {
+    if (text.trim().isEmpty || !KidStore.instance.voiceOn) return;
+    unawaited(ReadAloud.instance.say(text, inLang ?? lang));
+  }
+
+  void hush() => unawaited(ReadAloud.instance.stop());
 
   /// Yerel istatistik (ebeveyn raporu): doğru / yanlış cevap.
   void answer(bool correct) => KidStore.instance.answer(gameId, correct);

@@ -421,6 +421,102 @@ class VisView extends StatelessWidget {
   }
 }
 
+/// Görselin ekranda YAZI olarak görünen kısmı (seslendirmek için):
+/// (metin, dil). Okuma bilmeyen çocuk yazılı soruyu ve seçenekleri cihazın
+/// çevrimdışı sesiyle dinler. Resim türleri (yalın renk, hayvan resmi…)
+/// burada `null` döner: sorunun cevabını sesle ele vermemek için.
+(String, String)? visText(Vis v, String lang) {
+  String? s;
+  switch (v.t) {
+    case VT.text:
+      // Yalnız düz Latin sözcükler (İngilizce kelime kartları) İngilizce okunur.
+      return RegExp(r"^[A-Za-z][A-Za-z '\-]*$").hasMatch(v.s) ? (v.s, 'en') : null;
+    case VT.letter:
+      s = letterAt(lang, v.a, v.b, lower: v.c == 1);
+    case VT.number:
+      s = numL(v.a, lang);
+    case VT.digital:
+      s = clockText(v.a, v.b);
+    case VT.colorName:
+      s = nm(kColorKeys[v.a % kColorKeys.length], lang);
+    case VT.shapeName:
+      s = v.a < 10 ? nm(kShape2D[v.a], lang) : nm(kShape3D[(v.a - 10) % kShape3D.length], lang);
+    case VT.country:
+      s = countryName(v.s, lang);
+    case VT.capital:
+      s = capitalOf(v.s, lang);
+    case VT.money:
+      s = moneyText(v.a, lang);
+    case VT.note:
+      s = (kNoteNames[lang] ?? kNoteNames['en']!)[v.a % 7];
+    case VT.planetName:
+      s = nm(kPlanetKeys[v.a % kPlanetKeys.length], lang);
+    case VT.seasonName:
+      s = nm(kSeasonKeys[v.a % 4], lang);
+    case VT.signName:
+      s = nm(kTrafficKeys[v.a % kTrafficKeys.length], lang);
+    case VT.animalName:
+      s = nm(kAnimalKeys[v.a % kAnimalKeys.length], lang);
+    case VT.word:
+      s = nm(kWordKeys[v.a % kWordKeys.length], lang);
+    case VT.emoName:
+      s = nm(kEmotionKeys[v.a % kEmotionKeys.length], lang);
+    case VT.picName:
+      s = nm(v.s, lang);
+    case VT.rel:
+      s = nm(kRelKeys[v.a % kRelKeys.length], lang);
+    case VT.color:
+    case VT.shape:
+    case VT.shape3:
+    case VT.planet:
+    case VT.season:
+    case VT.animal:
+    case VT.face:
+    case VT.pic:
+    case VT.dino:
+      // Adı resmin altında yazan görseller (c == 1) de okunur.
+      if (v.c == 1) s = visName(v, lang);
+    default:
+      break;
+  }
+  return s == null || s.trim().isEmpty ? null : (s, lang);
+}
+
+/// Görselin adı (resimler dahil): doğru cevaptan sonra pekiştirme için
+/// söylenir ("İnek!"). Adı olmayan görselde `null`.
+String? visName(Vis v, String lang) {
+  String? s;
+  switch (v.t) {
+    case VT.color:
+      s = nm(kColorKeys[v.a % kColorKeys.length], lang);
+    case VT.shape:
+      s = nm(kShape2D[v.a % kShape2D.length], lang);
+    case VT.shape3:
+      s = nm(kShape3D[v.a % kShape3D.length], lang);
+    case VT.planet:
+      s = nm(kPlanetKeys[v.a % kPlanetKeys.length], lang);
+    case VT.season:
+      s = nm(kSeasonKeys[v.a % 4], lang);
+    case VT.animal:
+      s = nm(kAnimalKeys[v.a % kAnimalKeys.length], lang);
+    case VT.face:
+      s = nm(kEmotionKeys[v.a % kEmotionKeys.length], lang);
+    case VT.pic:
+      s = nm(v.s, lang);
+    case VT.dino:
+      s = nm(kDinoKeys[v.a % kDinoKeys.length], lang);
+    case VT.flag:
+    case VT.mapc:
+      s = countryName(v.s, lang);
+    default:
+      {
+        final t = visText(v, lang);
+        return t != null && t.$2 == lang ? t.$1 : null;
+      }
+  }
+  return s == null || s.trim().isEmpty ? null : s;
+}
+
 class _VisPainter extends CustomPainter {
   final void Function(Canvas c, double s) f;
   _VisPainter(this.f);

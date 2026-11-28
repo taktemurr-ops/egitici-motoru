@@ -396,6 +396,15 @@ class _ParentAreaState extends State<ParentArea> {
       const Divider(height: 28),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
+        secondary: const Icon(Icons.record_voice_over_rounded),
+        title: Text(et(lang, 'voice')),
+        subtitle: Text(et(lang, 'voiceSub'), style: const TextStyle(fontSize: 12)),
+        value: s.voiceOn,
+        onChanged: (v) => setState(() => s.voiceOn = v),
+      ),
+      const Divider(height: 28),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
         title: Text(et(lang, 'bedtime')),
         value: s.bedtimeOn,
         onChanged: (v) => setState(() => s.bedtimeOn = v),

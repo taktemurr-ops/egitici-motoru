@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:egitici_motoru/egitici_motoru.dart';
+import 'package:egitici_motoru/src/kid/read_aloud.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:studio_core/app/game_api.dart';
 import 'package:studio_core/core/game_rules.dart';
@@ -26,7 +27,10 @@ PlayContext fakeCtx(GeneratedLevel gl, String lang, List<RoundResult> results) =
     );
 
 void main() {
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    ReadAloud.enabled = false;
+  });
 
   for (final e in kEgiticiKinds.entries) {
     for (final lang in const ['tr', 'en', 'ar']) {

@@ -98,6 +98,10 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
   int rival = 0;
   late int skill;
 
+  /// Uzun süre dokunulmayınca (küçük zorlukta) doğru kutu nazikçe parlar.
+  bool nudge = false;
+  int _token = 0;
+
   EPlay get play => widget.play;
   QItem get item => widget.q.items[idx];
 
@@ -121,6 +125,36 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
   void _onItem() {
     final snd = item.sound;
     if (snd.isNotEmpty) later(350, () => play.sound(snd));
+    // Yazılı soru okunur: okuma bilmeyen çocuk da ne sorulduğunu duyar.
+    final pv = item.prompt;
+    final say = pv == null ? null : visText(pv, play.lang);
+    if (say != null) later(snd.isNotEmpty ? 1700 : 450, () => play.say(say.$1, say.$2));
+    final my = ++_token;
+    if (play.d <= 3 || skill < 1) {
+      later(9000, () {
+        if (!ended && my == _token && okAt == null) setState(() => nudge = true);
+      });
+    }
+  }
+
+  /// Hoparlör: sesi ve yazılı soruyu yeniden dinletir.
+  void _replay() {
+    final snd = item.sound;
+    if (snd.isNotEmpty) play.sound(snd);
+    final pv = item.prompt;
+    final say = pv == null ? null : visText(pv, play.lang);
+    if (say != null) later(snd.isNotEmpty ? 1400 : 0, () => play.say(say.$1, say.$2));
+  }
+
+  bool get _canReplay {
+    final pv = item.prompt;
+    return item.sound.isNotEmpty || (pv != null && visText(pv, play.lang) != null);
+  }
+
+  @override
+  void dispose() {
+    play.hush();
+    super.dispose();
   }
 
   /// Gösterilecek seçenekler: beceri düşükse ve zorlanınca yanlışlar azalır.
@@ -145,13 +179,33 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
     if (i == item.answer) {
       play.sfx(Sfx.clear);
       play.answer(true);
+      // Pekiştirme: doğru cevabın adı söylenir ("İnek!"), adı yoksa övgü.
+      final right = item.options[i];
+      final t = visText(right, play.lang);
+      final pv = item.prompt;
+      final pt = pv == null ? null : visText(pv, play.lang);
+      final name = visName(right, play.lang);
+      if (item.tip.isNotEmpty) {
+        // Öneri kartı okunur (okuma bilmeyen çocuk da duysun).
+        play.say(et(play.lang, item.tip));
+      } else if (t != null) {
+        play.say(t.$1, t.$2);
+      } else if (name != null) {
+        play.say(name);
+      } else if (pt != null && pt.$2 != play.lang) {
+        play.say(pt.$1, pt.$2);
+      } else {
+        play.say(et(play.lang, 'praise${(idx % 3) + 1}'));
+      }
       final tip = item.tip.isNotEmpty;
       setState(() {
         okAt = i;
         streakWrong = 0;
         showTip = tip;
+        nudge = false;
       });
-      later(tip ? 2600 : 650, _next);
+      // Söylenen ad duyulsun diye kısa bir bekleme (ses kapalıysa da aynı ritim).
+      later(tip ? (KidStore.instance.voiceOn ? 4200 : 2600) : 1050, _next);
     } else {
       play.sfx(Sfx.error);
       play.answer(false);
@@ -181,10 +235,18 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
       idx++;
       okAt = null;
       showTip = false;
+      nudge = false;
       wrong.clear();
       extraHide = 0;
     });
     _onItem();
+  }
+
+  /// Yazılı seçeneğin köşesindeki hoparlör: seçeneği dinletir (seçmez).
+  VoidCallback? _speakerFor(Vis v) {
+    final t = visText(v, play.lang);
+    if (t == null) return null;
+    return () => play.say(t.$1, t.$2);
   }
 
   @override
@@ -207,19 +269,27 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
           SizedBox(
             height: promptH,
             child: Center(
-              child: GestureDetector(
-                onTap: item.sound.isEmpty ? null : () => play.sound(item.sound),
-                child: Container(
-                  width: promptH * 1.25,
-                  height: promptH * 0.94,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: KColors.line, width: 2),
+              child: Stack(clipBehavior: Clip.none, children: [
+                GestureDetector(
+                  onTap: _canReplay ? _replay : null,
+                  child: Container(
+                    width: promptH * 1.25,
+                    height: promptH * 0.94,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: KColors.line, width: 2),
+                    ),
+                    child: Center(child: VisView(v: item.prompt!, lang: play.lang, size: promptH * 0.82)),
                   ),
-                  child: Center(child: VisView(v: item.prompt!, lang: play.lang, size: promptH * 0.82)),
                 ),
-              ),
+                if (_canReplay)
+                  PositionedDirectional(
+                    end: 6,
+                    bottom: 6,
+                    child: _SpeakBadge(size: 52, tooltip: et(play.lang, 'hear'), onTap: _replay),
+                  ),
+              ]),
             ),
           ),
         Expanded(
@@ -236,7 +306,10 @@ class _QuizViewState extends State<QuizView> with Clock<QuizView> {
                     color: okAt == i ? const Color(0xFFCDEBD3) : (wrong.contains(i) ? const Color(0xFFF1E3DF) : KColors.tiles[i % KColors.tiles.length]),
                     dim: wrong.contains(i),
                     shake: wrong.contains(i),
+                    glow: nudge && i == item.answer,
                     onTap: () => _tap(i),
+                    onSpeak: q.grid ? null : _speakerFor(item.options[i]),
+                    speakTip: et(play.lang, 'hear'),
                     child: VisView(v: item.options[i], lang: play.lang, size: tile * 0.86),
                   ),
               ],
@@ -287,13 +360,46 @@ class _OptionTile extends StatelessWidget {
   final Color color;
   final bool dim;
   final bool shake;
+  final bool glow;
   final VoidCallback onTap;
+  final VoidCallback? onSpeak;
+  final String speakTip;
   final Widget child;
-  const _OptionTile({super.key, required this.size, required this.color, required this.dim, required this.shake, required this.onTap, required this.child});
+  const _OptionTile(
+      {super.key,
+      required this.size,
+      required this.color,
+      required this.dim,
+      required this.shake,
+      required this.onTap,
+      required this.child,
+      this.glow = false,
+      this.onSpeak,
+      this.speakTip = ''});
 
   @override
   Widget build(BuildContext context) {
-    final tile = AnimatedOpacity(
+    final sp = onSpeak;
+    Widget tile = _plain();
+    if (glow) tile = _Glow(child: tile);
+    if (sp != null && size >= 72) {
+      final b = clampD(size * 0.3, 34, 48);
+      tile = Stack(clipBehavior: Clip.none, children: [
+        tile,
+        PositionedDirectional(top: 4, end: 4, child: _SpeakBadge(size: b, tooltip: speakTip, onTap: sp)),
+      ]);
+    }
+    if (!shake) return tile;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 380),
+      builder: (context, t, ch) => Transform.translate(offset: Offset(math.sin(t * math.pi * 6) * 8 * (1 - t), 0), child: ch),
+      child: tile,
+    );
+  }
+
+  Widget _plain() {
+    return AnimatedOpacity(
       duration: const Duration(milliseconds: 250),
       opacity: dim ? 0.45 : 1,
       child: Material(
@@ -307,33 +413,58 @@ class _OptionTile extends StatelessWidget {
         ),
       ),
     );
-    if (!shake) return tile;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 380),
-      builder: (context, t, ch) => Transform.translate(offset: Offset(math.sin(t * math.pi * 6) * 8 * (1 - t), 0), child: ch),
-      child: tile,
+  }
+}
+
+/// Küçük yuvarlak hoparlör düğmesi (dinle).
+class _SpeakBadge extends StatelessWidget {
+  final double size;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _SpeakBadge({required this.size, required this.tooltip, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: KColors.accent,
+        shape: const CircleBorder(side: BorderSide(color: Colors.white, width: 2.5)),
+        elevation: 3,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(width: size, height: size, child: Icon(Icons.volume_up_rounded, color: Colors.white, size: size * 0.58)),
+        ),
+      ),
     );
   }
 }
 
-class _RaceTrack extends StatelessWidget {
-  final int me;
-  final int rival;
-  final int total;
-  const _RaceTrack({required this.me, required this.rival, required this.total});
+/// Doğru kutunun nazik parıltısı (uzun süre dokunulmayınca ipucu): bir kez
+/// büyüyüp yerleşir, sonra altın hâle olarak kalır (sonsuz animasyon yok).
+class _Glow extends StatelessWidget {
+  final Widget child;
+  const _Glow({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, box) {
-      final w = box.maxWidth - 60;
-      double x(int v) => 10 + w * clampD(v / total, 0, 1);
-      return Stack(children: [
-        Positioned(left: 10, right: 10, top: 22, child: Container(height: 10, decoration: BoxDecoration(color: KColors.soft, borderRadius: BorderRadius.circular(5)))),
-        const Positioned(right: 6, top: 6, child: Text('🏁', style: TextStyle(fontSize: 28))),
-        AnimatedPositioned(duration: const Duration(milliseconds: 500), left: x(rival), top: 0, child: const Opacity(opacity: 0.6, child: Text('🐢', style: TextStyle(fontSize: 26)))),
-        AnimatedPositioned(duration: const Duration(milliseconds: 500), left: x(me), top: 20, child: const Text('🚗', style: TextStyle(fontSize: 28))),
-      ]);
-    });
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.elasticOut,
+      child: child,
+      builder: (context, v, ch) => Transform.scale(
+        scale: 1 + 0.06 * v,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: StudioLook.gold, width: 4),
+            boxShadow: [BoxShadow(color: StudioLook.gold.withValues(alpha: 0.6), blurRadius: 18, spreadRadius: 3)],
+          ),
+          child: ch,
+        ),
+      ),
+    );
   }
 }

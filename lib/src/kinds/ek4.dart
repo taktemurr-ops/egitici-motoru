@@ -248,6 +248,20 @@ class _VetViewState extends State<_VetView> with Clock<_VetView> {
   void initState() {
     super.initState();
     startClock();
+    later(500, _sayNext);
+  }
+
+  /// Sıradaki aletin adı okunur (okuma bilmeyen çocuk için).
+  void _sayNext() {
+    if (ended) return;
+    final need = widget.p.patients[pat].$2;
+    if (step < need.length) widget.play.say(et(widget.play.lang, kVetToolKeys[need[step]]));
+  }
+
+  @override
+  void dispose() {
+    widget.play.hush();
+    super.dispose();
   }
 
   void _tool(int t) {
@@ -260,6 +274,7 @@ class _VetViewState extends State<_VetView> with Clock<_VetView> {
         fx = t == 2 ? kVetAnimals[widget.p.patients[pat].$1].$2 : kVetTools[t];
         step++;
       });
+      if (step < need.length) later(450, _sayNext);
       if (step >= need.length) {
         later(800, () {
           if (pat + 1 >= widget.p.patients.length) {
@@ -271,6 +286,7 @@ class _VetViewState extends State<_VetView> with Clock<_VetView> {
               step = 0;
               fx = '';
             });
+            later(400, _sayNext);
           }
         });
       }
@@ -614,6 +630,20 @@ class _CarViewState extends State<_CarView> with Clock<_CarView> {
   void initState() {
     super.initState();
     startClock();
+    later(500, _sayNext);
+  }
+
+  /// Sıradaki işin aletinin adı okunur (okuma bilmeyen çocuk için).
+  void _sayNext() {
+    if (ended) return;
+    final jobs = widget.p.jobs;
+    if (step < jobs.length) widget.play.say(et(widget.play.lang, kCarToolKeys[jobs[step]]));
+  }
+
+  @override
+  void dispose() {
+    widget.play.hush();
+    super.dispose();
   }
 
   void _tool(int t, {int paint = -1}) {
@@ -640,6 +670,7 @@ class _CarViewState extends State<_CarView> with Clock<_CarView> {
       step++;
       scrub = 0;
     });
+    if (step < p.jobs.length) later(450, _sayNext);
     if (step >= p.jobs.length) {
       ended = true;
       later(700, () => widget.play.finish(mistakes: mistakes, seconds: seconds));
