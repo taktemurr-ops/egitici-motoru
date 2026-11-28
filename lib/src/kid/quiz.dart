@@ -526,8 +526,16 @@ class KidPlaymat extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(children: [
-        Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _MotifPainter(t.$3)))),
-        child,
+        // Motif bir kez çizilip ayrı katmanda önbelleğe alınır: seçenek
+        // dokunuşları, sarsılma ve dalga efektleri her karede tam ekran
+        // saveLayer + onlarca döndürülmüş emojiyi yeniden çizdirmesin
+        // (yazılımla çizen emülatörde/eski cihazda GPU yükü).
+        Positioned.fill(
+          child: IgnorePointer(
+            child: RepaintBoundary(child: CustomPaint(isComplex: true, willChange: false, painter: _MotifPainter(t.$3))),
+          ),
+        ),
+        RepaintBoundary(child: child),
       ]),
     );
   }
@@ -541,7 +549,7 @@ class _MotifPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final tp = TextPainter(text: TextSpan(text: motif, style: const TextStyle(fontSize: 26)), textDirection: TextDirection.ltr)..layout();
-    const step = 74.0;
+    const step = 92.0;
     final paint = Paint()..color = const Color(0x1F000000);
     canvas.saveLayer(Offset.zero & size, paint);
     var row = 0;

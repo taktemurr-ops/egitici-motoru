@@ -84,6 +84,7 @@ class ReadAloud {
   void Function(int word)? _onWord;
   VoidCallback? _onDone;
   int _token = 0;
+  Map<String, String>? _applied;
 
   /// Yeni okumanın başladığı bildirilmeden gelen bitiş/iptal olayları bir
   /// önceki okumaya aittir (durdurma sırası) ve yok sayılır.
@@ -157,10 +158,15 @@ class ReadAloud {
       _onWord = null;
       _onDone = null;
       _started = false;
-      await t.setVoice(voice).timeout(wait);
-      await t.setSpeechRate(0.42).timeout(wait);
-      await t.setPitch(1.05).timeout(wait);
-      await t.setVolume(1.0).timeout(wait);
+      // Ses ayarları yalnız ses değişince gönderilir (her kısa sözde dört
+      // platform çağrısı yapılmasın; hızlı dokunuşlarda TTS motoru yorulmasın).
+      if (!identical(_applied, voice)) {
+        await t.setVoice(voice).timeout(wait);
+        await t.setSpeechRate(0.42).timeout(wait);
+        await t.setPitch(1.05).timeout(wait);
+        await t.setVolume(1.0).timeout(wait);
+        _applied = voice;
+      }
       _onWord = onWord;
       _onDone = onDone;
       final r = await t.speak(text).timeout(wait);
