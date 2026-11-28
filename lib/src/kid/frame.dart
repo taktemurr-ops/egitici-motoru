@@ -218,35 +218,111 @@ class _RestScreen extends StatelessWidget {
   }
 }
 
-/// Yetişkin kontrolü: iki basamaklı çarpma; çocukların ayarlara ve
-/// satın almalara kazara girmesini önler.
+/// Yetişkin kontrolü: çarpımın sonucu tuş takımıyla YAZILIR (seçenekten
+/// seçilmez: rastgele dokunuşla geçme olasılığı 1/4 yerine ~1/90). Üç yanlışta
+/// kapı kapanır. Çocukların ayarlara ve satın almalara kazara girmesini önler.
 Future<bool> parentGate(BuildContext context, String lang) async {
   final r = math.Random();
   final a = 6 + r.nextInt(4), b = 6 + r.nextInt(4);
-  final answer = a * b;
-  final opts = <int>{answer};
-  while (opts.length < 4) {
-    opts.add(answer + r.nextInt(17) - 8);
-  }
-  final list = opts.toList()..shuffle(r);
   final ok = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      icon: const Icon(Icons.lock_outline),
-      title: Text(et(lang, 'askGrownup')),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(et(lang, 'grownupQ')),
-        const SizedBox(height: 12),
-        Text('$a × $b = ?', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: StudioLook.of(ctx).number)),
-        const SizedBox(height: 12),
-        Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
-          for (final o in list) OutlinedButton(onPressed: () => Navigator.of(ctx).pop(o == answer), child: Text('$o')),
-        ]),
-      ]),
-      actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(et(lang, 'cancel')))],
-    ),
+    builder: (ctx) => _GateDialog(a: a, b: b, lang: lang),
   );
   return ok ?? false;
+}
+
+class _GateDialog extends StatefulWidget {
+  final int a;
+  final int b;
+  final String lang;
+  const _GateDialog({required this.a, required this.b, required this.lang});
+
+  @override
+  State<_GateDialog> createState() => _GateDialogState();
+}
+
+class _GateDialogState extends State<_GateDialog> {
+  String typed = '';
+  int fails = 0;
+  bool wrong = false;
+
+  void _key(String k) {
+    setState(() {
+      wrong = false;
+      if (k == '<') {
+        if (typed.isNotEmpty) typed = typed.substring(0, typed.length - 1);
+        return;
+      }
+      if (typed.length < 3) typed += k;
+    });
+  }
+
+  void _submit() {
+    if (typed.isEmpty) return;
+    if (int.tryParse(typed) == widget.a * widget.b) {
+      Navigator.of(context).pop(true);
+      return;
+    }
+    fails++;
+    if (fails >= 3) {
+      Navigator.of(context).pop(false);
+      return;
+    }
+    setState(() {
+      typed = '';
+      wrong = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final look = StudioLook.of(context);
+    Widget key(String k, {IconData? icon, VoidCallback? onTap}) => Padding(
+          padding: const EdgeInsets.all(4),
+          child: SizedBox(
+            width: 64,
+            height: 52,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
+              onPressed: onTap ?? () => _key(k),
+              child: icon != null ? Icon(icon) : Text(k, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+            ),
+          ),
+        );
+    return AlertDialog(
+      icon: const Icon(Icons.lock_outline),
+      title: Text(et(widget.lang, 'askGrownup')),
+      content: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(et(widget.lang, 'grownupQ'), textAlign: TextAlign.center),
+          const SizedBox(height: 10),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text('${widget.a} × ${widget.b} = ${typed.isEmpty ? '?' : typed}',
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: wrong ? StudioLook.bad : look.number)),
+          ),
+          const SizedBox(height: 10),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              for (final row in const [
+                ['1', '2', '3'],
+                ['4', '5', '6'],
+                ['7', '8', '9'],
+              ])
+                Row(mainAxisSize: MainAxisSize.min, children: [for (final k in row) key(k)]),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                key('<', icon: Icons.backspace_outlined),
+                key('0'),
+                key('=', icon: Icons.check_rounded, onTap: _submit),
+              ]),
+            ]),
+          ),
+        ]),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(et(widget.lang, 'cancel')))],
+    );
+  }
 }
 
 /// Çıkartma albümü.
